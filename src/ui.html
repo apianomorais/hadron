@@ -24,7 +24,7 @@ h1,h2,h3,.num{font-family:"Space Grotesk",Inter,system-ui,sans-serif}
 button{font:inherit;color:inherit;cursor:pointer}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 button:disabled{cursor:not-allowed;opacity:.42}
-.app{display:grid;grid-template-columns:minmax(0,1fr) 400px;grid-template-rows:auto auto auto 1fr auto;grid-template-areas:"top top" "banner banner" "board panel" "side panel" "foot foot";gap:14px 18px;max-width:1440px;margin:0 auto;padding:10px max(16px,2vw) 40px}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 400px;grid-template-rows:auto auto auto 1fr auto;grid-template-areas:"top top" "banner banner" "board panel" "side panel" "foot panel";gap:14px 18px;max-width:1440px;margin:0 auto;padding:10px max(16px,2vw) 40px}
 .top{grid-area:top;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .top h1{margin:0;font-size:26px;letter-spacing:-.02em;line-height:1}
 .top h1 small{font:500 14px Inter,sans-serif;color:var(--mute);margin-left:10px;letter-spacing:0}
@@ -141,7 +141,11 @@ ol.interp li{margin:6px 0;color:#d4dde1}
 .tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:8px}
 .tgrid>div{display:flex;align-items:center;gap:6px;justify-content:space-between;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:6px 8px}
 .tgrid>div>span:first-child{white-space:nowrap}
-.foot{grid-area:foot;border-top:1px solid var(--line);padding-top:14px;font-size:13px;color:var(--mute);display:flex;gap:6px 16px;flex-wrap:wrap}
+.foot{grid-area:foot;border-top:1px solid var(--line);padding-top:16px;font-size:14px;color:var(--mute);display:flex;align-items:center;gap:16px}
+.foot img{height:72px;width:auto;flex:none}
+.mhead{display:flex;align-items:flex-start;gap:16px;justify-content:space-between}
+.mhead img{height:88px;width:auto;flex:none;margin:-4px -2px 0 0}
+@media(max-width:640px){.mhead img{height:64px}.foot img{height:60px}}
 .foot b{color:var(--ink);font-weight:600}
 .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#ffe3dc;color:#2a0c08;padding:10px 16px;border-radius:10px;font-weight:600;z-index:30;max-width:calc(100% - 32px);box-shadow:0 6px 30px #0008}
 @media(max-width:980px){
@@ -180,7 +184,7 @@ ol.interp li{margin:6px 0;color:#d4dde1}
     <div class="card"><h2>Placar</h2><div id="players"></div></div>
     <div class="card"><h2>Registro</h2><ul class="log" id="log"></ul></div>
   </section>
-  <footer class="foot"><span><b>HADRON</b>, criado por Apiano F. Morais, Job S. Furtado Neto e Ivan C. Jardim.</span><span>Protótipo eletrônico do jogo de tabuleiro.</span></footer>
+  <footer class="foot"><img src="{{LOGO}}" alt="LFCA | URCA" width="63" height="72"><div><b>Desenvolvido pelo LFCA</b>, Laboratório de Física Computacional Aplicada da Universidade Regional do Cariri (URCA).<br>HADRON foi criado por Apiano F. Morais, Job S. Furtado Neto e Ivan C. Jardim.</div></footer>
 </div>
 <div id="modal"></div>
 <div id="toast" class="toast" hidden></div>
@@ -196,6 +200,7 @@ const QLET = { u: 'u', d: 'd', c: 'c', s: 's', t: 't', b: 'b', e: 'E' };
 const GROUP = { basic: 'Básica', protect: 'Proteção', reaction: 'Reação', point: 'Ponto' };
 const DEFAULT_NAMES = ['Apiano', 'Ivan', 'Job', 'César']; // César Lattes, codescobridor do píon
 const SAVE_KEY = 'hadron.save.v1';
+const LOGO = '{{LOGO}}';
 const S = 50;
 
 let st = null;
@@ -500,7 +505,7 @@ function modalNew() {
   const s = ui.setup || (ui.setup = setupDefaults());
   const saved = loadSaved();
   const rows = s.players.slice(0, s.n).map((p, i) => `<div class="prow"><span class="dot" style="background:${PCOL[i]};width:22px;height:22px"></span><input id="p${i}name" maxlength="16" value="${esc(p.name)}" aria-label="Nome do jogador ${i + 1}"><div class="seg"><button type="button" data-ptype="${i}:h" aria-pressed="${!p.bot}">Humano</button><button type="button" data-ptype="${i}:b" aria-pressed="${p.bot}">Computador</button></div></div>`).join('');
-  return `<div class="modal"><h2>Nova partida de HADRON</h2><p class="lead">Construa hádrons e núcleos atômicos com quarks produzidos pelos aceleradores. Vence quem chegar a ${E.WIN} pontos de estabilidade. Todos jogam no mesmo aparelho; o computador pode ocupar qualquer lugar.</p><p class="note">Criado por Apiano F. Morais, Job S. Furtado Neto e Ivan C. Jardim.</p>
+  return `<div class="modal"><div class="mhead"><h2>Nova partida de HADRON</h2><img src="${LOGO}" alt="LFCA | URCA"></div><p class="lead">Construa hádrons e núcleos atômicos com quarks produzidos pelos aceleradores. Vence quem chegar a ${E.WIN} pontos de estabilidade. Todos jogam no mesmo aparelho; o computador pode ocupar qualquer lugar.</p><p class="note">Criado por Apiano F. Morais, Job S. Furtado Neto e Ivan C. Jardim. Desenvolvido pelo LFCA/URCA.</p>
   <h3>Jogadores</h3><div class="seg"><button type="button" data-pn="3" aria-pressed="${s.n === 3}">3 jogadores</button><button type="button" data-pn="4" aria-pressed="${s.n === 4}">4 jogadores</button></div>${rows}
   <div class="mfoot">${saved && !saved.winner && st && (st.demo || st.phase === 'over') ? '<button class="btn" type="button" data-a="continue">Continuar partida salva</button>' : ''}<button class="btn ghost" type="button" data-a="close">${st && st.demo ? 'Assistir à demonstração' : 'Voltar'}</button><button class="btn pri" type="button" data-a="start">Começar</button></div></div>`;
 }
@@ -541,7 +546,7 @@ function modalRules() {
     <p class="note">As porcentagens somam mais de 100% porque números são compartilhados: um 6 produz Up e Down ao mesmo tempo.</p>
     <h3>Rolagens desta partida (${total})</h3><p class="note">Barras: vezes que cada soma saiu. Traço: o esperado para ${total} rolagens. Em vermelho, os campos.</p><div class="hist">${hist}</div>`;
   }
-  return `<div class="modal wide" role="dialog" aria-label="Regras"><h2>Regras do protótipo</h2><p class="lead">HADRON, criado por Apiano F. Morais, Job S. Furtado Neto e Ivan C. Jardim.</p><div class="tabs" role="tablist">${tab('regras', 'Regras')}${tab('escolhas', 'Escolhas de design')}${tab('stats', 'Estatística')}</div>${body}<div class="mfoot"><button class="btn pri" type="button" data-a="close">Fechar</button></div></div>`;
+  return `<div class="modal wide" role="dialog" aria-label="Regras"><h2>Regras do protótipo</h2><p class="lead">HADRON, criado por Apiano F. Morais, Job S. Furtado Neto e Ivan C. Jardim e desenvolvido pelo LFCA, Laboratório de Física Computacional Aplicada da Universidade Regional do Cariri (URCA).</p><div class="tabs" role="tablist">${tab('regras', 'Regras')}${tab('escolhas', 'Escolhas de design')}${tab('stats', 'Estatística')}</div>${body}<div class="mfoot"><button class="btn pri" type="button" data-a="close">Fechar</button></div></div>`;
 }
 function modalTrade() {
   const pi = st.current, p = st.players[pi], T = ui.trade;

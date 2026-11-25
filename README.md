@@ -6,7 +6,11 @@ Jogo de tabuleiro estratégico e educacional sobre física de partículas. Os jo
 
 ## Créditos
 
+<img src="assets/lfca-urca.png" alt="LFCA | URCA" width="150" align="right">
+
 Criado por **Apiano F. Morais**, **Job S. Furtado Neto** e **Ivan C. Jardim**.
+
+Desenvolvido pelo **LFCA**, Laboratório de Física Computacional Aplicada da Universidade Regional do Cariri (URCA).
 
 ## Como jogar
 
@@ -61,6 +65,7 @@ Em 400 partidas entre jogadores do computador, a vitória levou em média 12,5 r
 | `src/engine.js` | Motor de regras: lógica pura, estado em JSON. |
 | `src/ui.html` | Interface: tabuleiro em SVG, painéis e janelas. |
 | `tests/sim.js` | Simula centenas de partidas completas e confere as regras a cada jogada. |
+| `assets/` | Símbolo do LFCA/URCA. O `build.py` embute a versão de 256 px no `index.html`. |
 
 ```
 python3 build.py      # regenera index.html a partir de src/
