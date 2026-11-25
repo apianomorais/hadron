@@ -1,6 +1,6 @@
 # HADRON
 
-Jogo de tabuleiro estratégico e educacional sobre física de partículas. Os jogadores produzem quarks em aceleradores, constroem hádrons e núcleos atômicos e disputam 12 pontos de estabilidade. Este repositório guarda o protótipo eletrônico, que roda direto no navegador.
+Jogo de tabuleiro estratégico e educacional sobre Física de partículas. Os jogadores produzem quarks em aceleradores, constroem hádrons e núcleos atômicos e disputam 12 pontos de estabilidade. Este repositório guarda o protótipo eletrônico, que roda direto no navegador.
 
 **Jogar:** https://apianomorais.github.io/hadron/
 
@@ -22,11 +22,11 @@ Desenvolvido pelo **LFCA**, Laboratório de Física Computacional Aplicada da Un
 - No fim de cada turno, todo Top vira Charm + 1 Energia e todo Bottom vira Strange + 1 Energia.
 - Vence quem chegar a 12 pontos de estabilidade no próprio turno.
 
-As regras completas, a física por trás de cada peça e a estatística da partida ficam no botão **Regras** dentro do jogo.
+As regras completas, a Física por trás de cada peça e a estatística da partida ficam no botão **Regras** dentro do jogo.
 
 ## Adversários do computador
 
-Os lugares do computador são ocupados por cientistas que marcaram a física, cada um com um nível de dificuldade.
+Os lugares do computador são ocupados por cientistas que marcaram a Física, cada um com um nível de dificuldade.
 
 | Nível | Personagens |
 |---|---|
@@ -36,9 +36,9 @@ Os lugares do computador são ocupados por cientistas que marcaram a física, ca
 
 O nível fácil joga quase ao acaso, o médio constrói de forma gulosa e o difícil avalia o valor de cada construção, faz trocas que completam construções e usa as cartas com propósito.
 
-## A física por trás
+## A Física por trás
 
-São 53 verbetes em duas camadas: um resumo acessível, para o ensino médio, e uma parte "Aprofundar", com massas, cargas, tempos de vida e a história das descobertas. Eles cobrem os quarks, os hádrons, os núcleos, os aceleradores e detectores, os campos e as forças, os fenômenos das cartas, os experimentos e os cientistas do jogo. Para abrir um verbete, toque em qualquer hexágono, peça ou ficha do tabuleiro, nos botões **física** do painel ou na aba **A física** das Regras. Quando o jogo simplifica a natureza (por exemplo, o decaimento do Top em Charm), o texto avisa.
+São 53 verbetes em duas camadas: um resumo acessível, para o ensino médio, e uma parte "Aprofundar", com massas, cargas, tempos de vida e a história das descobertas. Eles cobrem os quarks, os hádrons, os núcleos, os aceleradores e detectores, os campos e as forças, os fenômenos das cartas, os experimentos e os cientistas do jogo. Para abrir um verbete, toque em qualquer hexágono, peça ou ficha do tabuleiro, nos botões **Física** do painel ou na aba **A Física** das Regras. Quando o jogo simplifica a natureza (por exemplo, o decaimento do Top em Charm), o texto avisa.
 
 ## Distribuição dos hexágonos
 
@@ -75,7 +75,7 @@ Os níveis do computador foram medidos com `tests/levels.js`, em 300 partidas de
 | `index.html` | O jogo pronto, gerado pelo `build.py`. Não edite à mão. |
 | `src/engine.js` | Motor de regras: lógica pura, estado em JSON. |
 | `src/ui.html` | Interface: tabuleiro em SVG, painéis, janelas e o tutorial. |
-| `src/physics.js` | Os 53 verbetes de "a física por trás". |
+| `src/physics.js` | Os 53 verbetes de "a Física por trás". |
 | `tests/sim.js` | Simula centenas de partidas completas e confere as regras a cada jogada. |
 | `tests/levels.js` | Mede a força dos níveis fácil, médio e difícil. |
 | `assets/` | Símbolo do LFCA/URCA. O `build.py` embute a versão de 256 px no `index.html`. |

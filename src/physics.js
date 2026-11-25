@@ -1,4 +1,4 @@
-/* HADRON — a física por trás do jogo.
+/* HADRON — a Física por trás do jogo.
    Cada verbete tem um resumo acessível (s) e uma camada para aprofundar (d).
    Parágrafos separados por linha em branco. Massas em MeV/c² ou GeV/c². */
 const HADRON_PHYS = {
@@ -34,7 +34,7 @@ q_b: { cat: 'quarks', t: 'Quark bottom', see: ['acc_big', 'detector'],
   d: 'Carga de −1/3 e massa de cerca de 4,18 GeV/c². Descoberto em 1977 no Fermilab pela equipe de Leon Lederman, por meio da partícula Υ (upsilon), um par bottom e antibottom.\n\nMésons B vivem cerca de 1,5 × 10⁻¹² s, tempo para percorrer alguns milímetros num detector, o que permite reconhecê-los. Na natureza, o bottom decai principalmente em charm.\n\nNo jogo, o Bottom que sobra no fim do turno decai em Strange + Energia.' },
 energia: { cat: 'quarks', t: 'Energia', see: ['annihilation', 'q_t'],
   s: 'Massa e energia são duas faces da mesma coisa: E = mc². Quando partículas pesadas decaem em partículas leves, a diferença de massa vira energia.',
-  d: 'Nos aceleradores acontece o caminho inverso: a energia do movimento das partículas que colidem vira massa de partículas novas. É assim que se criam quarks pesados como o top.\n\nPor isso a física de partículas mede massas em unidades de energia. Um próton tem cerca de 0,94 GeV/c², ou seja, quase 1 GeV.\n\nNo jogo, a Energia nasce dos decaimentos de Top e Bottom e paga antipartículas, cartas e construções especiais.' },
+  d: 'Nos aceleradores acontece o caminho inverso: a energia do movimento das partículas que colidem vira massa de partículas novas. É assim que se criam quarks pesados como o top.\n\nPor isso a Física de partículas mede massas em unidades de energia. Um próton tem cerca de 0,94 GeV/c², ou seja, quase 1 GeV.\n\nNo jogo, a Energia nasce dos decaimentos de Top e Bottom e paga antipartículas, cartas e construções especiais.' },
 abund: { cat: 'quarks', t: 'Por que os quarks têm raridades diferentes', see: ['q_u', 'q_t', 'acc_ion'],
   s: 'Tudo o que é estável no universo é feito de up e down. Os outros quatro quarks só aparecem em colisões energéticas e desaparecem em frações de segundo.',
   d: 'Quanto mais pesado o quark, mais energia é preciso para criá-lo (E = mc²) e mais depressa ele decai em quarks mais leves pela força fraca. Quarks pesados existem hoje em aceleradores e em raios cósmicos, e foram abundantes nos primeiros microssegundos depois do Big Bang, no plasma de quarks e glúons.\n\nOs hexágonos do HADRON seguem essa ordem: Up 38,9%, Down 36,1%, Charm 36,1%, Strange 33,3%, e Top e Bottom só 5,6% cada por rolagem. Os números somam mais de 100% porque um mesmo número pode estar em vários hexágonos.' },
@@ -119,7 +119,7 @@ unif: { cat: 'forces', t: 'Unificação das forças', see: ['force_em', 'force_w
   s: 'Forças que parecem diferentes podem ser faces de uma só. A eletromagnética e a fraca já foram unificadas na força eletrofraca.',
   d: 'Sheldon Glashow, Abdus Salam e Steven Weinberg construíram a teoria eletrofraca nos anos 1960 (Nobel de 1979), confirmada com a descoberta dos bósons W e Z em 1983. Em energias altíssimas, as duas forças se comportam como uma só.\n\nTeorias de grande unificação tentam incluir também a força forte, mas ainda não têm confirmação experimental, e a gravidade continua de fora.\n\nNo jogo, juntar as quatro cartas de força completa o experimento Unificação, e dois campos no mesmo hexágono disparam a Unificação Eletrofraca.' },
 gauge: { cat: 'forces', t: 'Simetria de gauge', see: ['sci_emmy', 'unif'],
-  s: 'As forças fundamentais nascem de simetrias: transformações que deixam as leis da física iguais.',
+  s: 'As forças fundamentais nascem de simetrias: transformações que deixam as leis da Física iguais.',
   d: 'No Modelo Padrão, a força forte vem da simetria SU(3) e a eletrofraca, de SU(2) × U(1). Exigir que essas simetrias valham em cada ponto do espaço obriga a existir partículas mensageiras: glúons, bósons W e Z, e o fóton.\n\nO teorema de Emmy Noether (1918) mostra que cada simetria contínua corresponde a uma quantidade conservada, como a energia ou a carga elétrica.\n\nNo jogo, a carta Simetria Gauge protege uma construção, como uma simetria protege uma grandeza de mudar.' },
 
 // ------------------------------------------------------------ fenômenos e cartas
@@ -139,14 +139,14 @@ stab: { cat: 'phenomena', t: 'Estabilidade e leis de conservação', see: ['prot
   s: 'Partículas e núcleos estáveis são aqueles que não têm para onde decair sem violar uma lei de conservação.',
   d: 'Um núcleo é estável quando nenhum decaimento possível libera energia, ou quando o decaimento é proibido por alguma lei de conservação. O próton, por exemplo, é o bárion mais leve: a conservação do número bariônico o impede de decair.\n\nNa natureza não existe um botão para cancelar um decaimento. A carta Estabilização Quântica é uma licença do jogo inspirada nessas leis.' },
 discovery: { cat: 'phenomena', t: 'Descoberta científica', see: ['exp_higgs', 'abund'],
-  s: 'Na física de partículas, uma descoberta exige evidência fortíssima: a chance de o sinal ser só uma flutuação estatística precisa ser menor que 1 em 3,5 milhões.',
-  d: 'Esse critério é chamado de "5 sigma" e foi o usado no anúncio do bóson de Higgs, em 2012. A estatística é uma ferramenta central da física, assim como as probabilidades dos dados neste jogo.' },
+  s: 'Na Física de partículas, uma descoberta exige evidência fortíssima: a chance de o sinal ser só uma flutuação estatística precisa ser menor que 1 em 3,5 milhões.',
+  d: 'Esse critério é chamado de "5 sigma" e foi o usado no anúncio do bóson de Higgs, em 2012. A estatística é uma ferramenta central da Física, assim como as probabilidades dos dados neste jogo.' },
 collab: { cat: 'phenomena', t: 'Colaboração científica', see: ['acc_big', 'exp_higgs'],
   s: 'Os grandes experimentos reúnem milhares de cientistas de dezenas de países.',
   d: 'As colaborações ATLAS e CMS, no LHC, têm cada uma milhares de pesquisadores. Físicos brasileiros participam de experimentos do CERN como ATLAS, CMS, LHCb e ALICE, e desde março de 2024 o Brasil é Estado Membro Associado do CERN, o primeiro das Américas.\n\nNo jogo, a carta Colaboração Acadêmica troca cartas entre laboratórios.' },
 nobel: { cat: 'phenomena', t: 'Publicação e Prêmio Nobel', see: ['discovery', 'collab'],
   s: 'Uma descoberta vira conhecimento quando é publicada e verificada por outros cientistas.',
-  d: 'Artigos passam por revisão de outros especialistas antes de sair em revistas como a Nature ou a Physical Review. O Nobel de Física é dado desde 1901; entre os premiados por física de partículas estão Yukawa (1949), Powell (1950), Gell-Mann (1969) e Englert e Higgs (2013).\n\nAs cartas de ponto do jogo representam esse reconhecimento.' },
+  d: 'Artigos passam por revisão de outros especialistas antes de sair em revistas como a Nature ou a Physical Review. O Nobel de Física é dado desde 1901; entre os premiados por Física de partículas estão Yukawa (1949), Powell (1950), Gell-Mann (1969) e Englert e Higgs (2013).\n\nAs cartas de ponto do jogo representam esse reconhecimento.' },
 
 // ------------------------------------------------------------ experimentos
 exp_higgs: { cat: 'experiments', t: 'Experimento Bóson de Higgs', see: ['higgs', 'acc_big', 'discovery'],
@@ -164,20 +164,20 @@ sci_enrico: { cat: 'people', t: 'Enrico Fermi (1901–1954)', see: ['force_weak'
   s: 'Escreveu a primeira teoria da força fraca e coordenou o primeiro reator nuclear.',
   d: 'Sua teoria do decaimento beta, de 1934, popularizou o nome neutrino ("pequeno neutro", em italiano). Ganhou o Nobel de 1938. Em 1942, em Chicago, coordenou a primeira reação em cadeia controlada. Partículas como quarks e elétrons se chamam férmions em sua homenagem.' },
 sci_elisa: { cat: 'people', t: 'Elisa Frota-Pessôa (1921–2018)', see: ['pion', 'kaon'],
-  s: 'Uma das duas primeiras mulheres formadas em física no Brasil e uma das fundadoras do Centro Brasileiro de Pesquisas Físicas (CBPF), em 1949.',
-  d: 'Com Neusa Margem, escreveu o primeiro artigo de pesquisa feito no CBPF, sobre o decaimento de mésons observado em emulsões nucleares. Coordenou o Laboratório de Emulsões Nucleares do CBPF até 1964 e estudou mésons K com grupos europeus. É uma das pioneiras da física de partículas no país.' },
+  s: 'Uma das duas primeiras mulheres formadas em Física no Brasil e uma das fundadoras do Centro Brasileiro de Pesquisas Físicas (CBPF), em 1949.',
+  d: 'Com Neusa Margem, escreveu o primeiro artigo de pesquisa feito no CBPF, sobre o decaimento de mésons observado em emulsões nucleares. Coordenou o Laboratório de Emulsões Nucleares do CBPF até 1964 e estudou mésons K com grupos europeus. É uma das pioneiras da Física de partículas no país.' },
 sci_lise: { cat: 'people', t: 'Lise Meitner (1878–1968)', see: ['nuc_fission'],
   s: 'Explicou, com o sobrinho Otto Frisch, como o núcleo de urânio se divide: a fissão nuclear, em 1939.',
   d: 'Austríaca, trabalhou por três décadas em Berlim com Otto Hahn e teve de fugir da Alemanha nazista em 1938. O Nobel pela fissão (Química, 1944) foi só para Hahn, uma omissão hoje muito lembrada. O elemento 109, o meitnério, leva seu nome.' },
 sci_mario: { cat: 'people', t: 'Mário Schenberg (1914–1990)', see: ['force_weak', 'energia'],
   s: 'Físico teórico nascido no Recife. Com George Gamow, explicou em 1941 como a perda de neutrinos faz estrelas colapsarem: o processo Urca.',
-  d: 'Gamow batizou o processo com o nome do Cassino da Urca, no Rio de Janeiro: a energia sumia do centro da estrela tão depressa quanto o dinheiro dos apostadores. Schenberg também trabalhou com Subrahmanyan Chandrasekhar e foi um dos maiores nomes da física teórica no Brasil.' },
+  d: 'Gamow batizou o processo com o nome do Cassino da Urca, no Rio de Janeiro: a energia sumia do centro da estrela tão depressa quanto o dinheiro dos apostadores. Schenberg também trabalhou com Subrahmanyan Chandrasekhar e foi um dos maiores nomes da Física teórica no Brasil.' },
 sci_maria: { cat: 'people', t: 'Maria Goeppert Mayer (1906–1972)', see: ['helium', 'carbon'],
   s: 'Criou o modelo de camadas do núcleo, que explica por que alguns núcleos são extremamente estáveis.',
   d: 'Núcleos com 2, 8, 20, 28, 50, 82 ou 126 prótons ou nêutrons, os "números mágicos", são especialmente estáveis. O hélio-4, com 2 prótons e 2 nêutrons, é duplamente mágico. Ela recebeu o Nobel de Física de 1963, a segunda mulher a ganhá-lo.' },
 sci_wu: { cat: 'people', t: 'Chien-Shiung Wu (1912–1997)', see: ['force_weak'],
   s: 'Mostrou, num experimento com cobalto-60 em 1956 e 1957, que a força fraca distingue esquerda de direita.',
-  d: 'A descoberta derrubou a crença de que as leis da física são idênticas num espelho, a conservação da paridade. Tsung-Dao Lee e Chen-Ning Yang, que propuseram a ideia, receberam o Nobel de 1957; Wu não foi incluída. Ela já era referência mundial em decaimento beta.' },
+  d: 'A descoberta derrubou a crença de que as leis da Física são idênticas num espelho, a conservação da paridade. Tsung-Dao Lee e Chen-Ning Yang, que propuseram a ideia, receberam o Nobel de 1957; Wu não foi incluída. Ela já era referência mundial em decaimento beta.' },
 sci_murray: { cat: 'people', t: 'Murray Gell-Mann (1929–2019)', see: ['q_u', 'q_s'],
   s: 'Propôs em 1964 que prótons, nêutrons e mésons são feitos de quarks, e deu o nome à partícula.',
   d: 'Também criou o conceito de estranheza, em 1953 (Kazuhiko Nishijima chegou à mesma ideia de forma independente), e organizou as partículas no "Caminho Óctuplo". George Zweig propôs os quarks na mesma época, também de forma independente. O nome "quark" veio de uma frase do livro Finnegans Wake, de James Joyce. Recebeu o Nobel de 1969.' },

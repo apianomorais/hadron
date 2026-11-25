@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>HADRON</title>
 <meta name="author" content="Apiano F. Morais, Job S. Furtado Neto e Ivan C. Jardim">
-<meta name="description" content="HADRON: jogo de tabuleiro de física de partículas. Produza quarks, construa hádrons e núcleos atômicos.">
+<meta name="description" content="HADRON: jogo de tabuleiro de Física de partículas. Produza quarks, construa hádrons e núcleos atômicos.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
-/* VOICE occasion: jogo de tabuleiro de física de partículas, sério e vivo
+/* VOICE occasion: jogo de tabuleiro de Física de partículas, sério e vivo
    IDEA a placa fotográfica de uma câmara de bolhas (trilhas de partículas em espiral) ao lado do console de um detector
    PICTURE o tabuleiro hexagonal como corte do detector, peças dos jogadores nas intersecções, campos quânticos como fichas
    COLOUR fundo negro de câmara de bolhas; as cores dos quarks do GDD nos hexágonos; jogadores em branco, laranja, rosa e lima
@@ -158,7 +158,9 @@ svg [data-phys]{cursor:pointer}
 .coach .stepno{font:600 13px Inter,sans-serif;color:var(--e)}
 .coach .msg{flex:1 1 380px}
 .prow select{min-height:44px;font-size:16px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:0 10px;width:100%}
-.pbio{margin:-2px 0 8px 32px;font-size:13px;color:var(--mute)}
+.pbio{margin:0 0 10px 32px;font-size:13px;color:var(--mute)}
+.plev{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 6px 32px}
+.plev .l{font-size:13px;color:var(--mute);font-weight:600}
 .pbio b{color:var(--ink);font-weight:600}
 .phys .cat{display:block;color:var(--e);font-size:13px;font-weight:600;margin-bottom:4px}
 .phys .sum{font-size:17px;line-height:1.55;color:var(--ink)}
@@ -187,6 +189,8 @@ details summary{cursor:pointer;color:#9fd8ff;font-weight:600;padding:6px 0;min-h
   .modal{padding:16px}
   .modal h2{font-size:24px}
   .coach .msg{order:0;flex-basis:100%}
+  .prow{grid-template-columns:auto minmax(0,1fr)}
+  .prow>.seg{grid-column:2}
   .coach .dice{display:none}
 }
 @media(prefers-reduced-motion:reduce){.dice.roll svg,.pulse{animation:none}}
@@ -198,7 +202,7 @@ details summary{cursor:pointer;color:#9fd8ff;font-weight:600;padding:6px 0;min-h
     <h1>HADRON <small id="sub">Física de partículas em 2d6</small></h1>
     <div class="sp"></div>
     <button class="btn ghost sm" id="bTut" type="button">Tutorial</button>
-    <button class="btn ghost sm" id="bRules" type="button">Regras<span class="long"> e física</span></button>
+    <button class="btn ghost sm" id="bRules" type="button">Regras<span class="long"> e Física</span></button>
     <button class="btn sm" id="bNew" type="button">Nova partida</button>
   </header>
   <section class="banner" id="banner" aria-live="polite"></section>
@@ -265,7 +269,7 @@ const costHTML = c => `<span class="cost">${Object.entries(c).filter(([, n]) => 
 const pdot = i => `<span class="dot" style="background:${esc(st.players[i].color)}"></span>`;
 const pname = i => `${pdot(i)}<span>${esc(st.players[i].name)}</span>`;
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-const phb = (key, label = 'física') => PHYS.e[key] ? `<button class="phb" type="button" data-phys="${key}" aria-label="A física: ${esc(PHYS.e[key].t)}">${label}</button>` : '';
+const phb = (key, label = 'Física') => PHYS.e[key] ? `<button class="phb" type="button" data-phys="${key}" aria-label="A Física: ${esc(PHYS.e[key].t)}">${label}</button>` : '';
 function mix(a, b, t) {
   const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
   const A = p(a), B = p(b);
@@ -429,7 +433,7 @@ function renderBoard() {
 }
 function renderLegend() {
   const ts = E.tileStats();
-  $('#legend').innerHTML = '<span>Chance de produzir a cada rolagem (toque para ler a física):</span>' + E.Q.map(k => `<button type="button" data-phys="${PH_RES(k)}">${qd(k)}<b>${E.QN[k]}</b> ${pct(ts[k].p)}</button>`).join('');
+  $('#legend').innerHTML = '<span>Chance de produzir a cada rolagem (toque para ler a Física):</span>' + E.Q.map(k => `<button type="button" data-phys="${PH_RES(k)}">${qd(k)}<b>${E.QN[k]}</b> ${pct(ts[k].p)}</button>`).join('');
 }
 
 // ------------------------------------------------------------ faixa de instrução
@@ -482,7 +486,7 @@ function renderBanner() {
     opts = '<button class="btn pri" type="button" data-a="end">Encerrar turno</button>';
   }
   if (tutActive()) return renderCoach(dice);
-  if (pd && PH_PENDING[pd.kind]) opts += `<button class="btn ghost" type="button" data-phys="${PH_PENDING[pd.kind]}">A física</button>`;
+  if (pd && PH_PENDING[pd.kind]) opts += `<button class="btn ghost" type="button" data-phys="${PH_PENDING[pd.kind]}">A Física</button>`;
   b.innerHTML = `${dice}<div class="who">${pname(who)}</div><div class="msg">${msg}</div><div class="opts">${opts}</div>`;
 }
 
@@ -510,7 +514,7 @@ function renderPanel() {
   const canCard = id => canAct || (base && !!ts && ts.expect === 'card' && ts.card === id);
   const vb = E.vpBreak(st, pi);
   let h = `<div class="card"><div class="me">${pdot(pi)}<h2>${esc(p.name)}</h2><span class="vp num">${vb.total}<small> / ${E.WIN}</small></span></div>`;
-  h += '<div class="res">' + ['u', 'd', 'c', 's', 't', 'b', 'e'].map(k => `<button type="button" class="rc${k === 't' || k === 'b' ? ' unst' : ''}" data-phys="${PH_RES(k)}" title="${E.QN[k]}${k === 't' || k === 'b' ? ' (instável: decai no fim do turno)' : ''}. Toque para ler a física.">${qd(k)}<span class="n">${p.res[k]}</span><span class="lab">${E.QN[k]}</span></button>`).join('') + '</div>';
+  h += '<div class="res">' + ['u', 'd', 'c', 's', 't', 'b', 'e'].map(k => `<button type="button" class="rc${k === 't' || k === 'b' ? ' unst' : ''}" data-phys="${PH_RES(k)}" title="${E.QN[k]}${k === 't' || k === 'b' ? ' (instável: decai no fim do turno)' : ''}. Toque para ler a Física.">${qd(k)}<span class="n">${p.res[k]}</span><span class="lab">${E.QN[k]}</span></button>`).join('') + '</div>';
   if (st.phase === 'setup') h += '<p class="note">Preparação: cada jogador posiciona um Próton e depois um Nêutron, cada um com um Tubo de Deriva, sem custo. Os recursos iniciais vêm dos hexágonos do Nêutron.</p>';
   else if (p.bot) h += '<p class="note">O computador está jogando este turno.</p>';
   else if (st.flags.discount) h += '<p class="note">Força Nuclear Forte ativa: o próximo bárion custa 1 Up a menos.</p>';
@@ -571,9 +575,14 @@ function renderLog() {
 function setupDefaults() {
   return { n: 3, players: DEFAULT_NAMES.map((name, i) => ({ name, bot: false, persona: SEAT_PERSONA[i] })) };
 }
+const takenBy = (s, i) => new Set(s.players.slice(0, s.n).filter((q, j) => j !== i && q.bot).map(q => q.persona));
 function personaSelect(s, i, p) {
-  const taken = new Set(s.players.slice(0, s.n).filter((q, j) => j !== i && q.bot).map(q => q.persona));
-  return `<select id="p${i}persona" data-seat="${i}" aria-label="Personagem do jogador ${i + 1}">${[1, 2, 3].map(l => `<optgroup label="${LEVEL[l]}">${PERSONAS.filter(x => x.level === l).map(x => `<option value="${x.id}"${x.id === p.persona ? ' selected' : ''}${taken.has(x.id) ? ' disabled' : ''}>${esc(x.name)} · ${esc(PHYS.e[x.phys].t.replace(/ \(.*/, ''))}</option>`).join('')}</optgroup>`).join('')}</select>`;
+  const taken = takenBy(s, i), lvl = (PERSONA(p.persona) || PERSONAS[3]).level;
+  return `<select id="p${i}persona" data-seat="${i}" aria-label="Cientista do jogador ${i + 1}">${PERSONAS.filter(x => x.level === lvl).map(x => `<option value="${x.id}"${x.id === p.persona ? ' selected' : ''}${taken.has(x.id) ? ' disabled' : ''}>${esc(x.name)} · ${esc(PHYS.e[x.phys].t.replace(/ \(.*/, ''))}</option>`).join('')}</select>`;
+}
+function pickPersona(s, i, lvl) { // primeiro cientista livre do nível; se todos estiverem em uso, repete
+  const taken = takenBy(s, i), pool = PERSONAS.filter(x => x.level === lvl);
+  return (pool.find(x => !taken.has(x.id)) || pool[0]).id;
 }
 function modalNew() {
   const s = ui.setup || (ui.setup = setupDefaults());
@@ -581,12 +590,13 @@ function modalNew() {
   const rows = s.players.slice(0, s.n).map((p, i) => {
     const per = p.bot ? PERSONA(p.persona) : null;
     const field = p.bot ? personaSelect(s, i, p) : `<input id="p${i}name" maxlength="16" value="${esc(p.name)}" aria-label="Nome do jogador ${i + 1}">`;
-    const bio = per ? `<p class="pbio"><b>Nível ${LEVEL[per.level].toLowerCase()}.</b> ${esc(PHYS.e[per.phys].s)} ${phb(per.phys, 'quem foi')}</p>` : '';
-    return `<div class="prow"><span class="dot" style="background:${PCOL[i]};width:22px;height:22px"></span>${field}<div class="seg"><button type="button" data-ptype="${i}:h" aria-pressed="${!p.bot}">Humano</button><button type="button" data-ptype="${i}:b" aria-pressed="${p.bot}">Computador</button></div></div>${bio}`;
+    const lev = per ? `<div class="plev"><span class="l">Dificuldade</span><div class="seg" role="group" aria-label="Dificuldade do jogador ${i + 1}">${[1, 2, 3].map(l => `<button type="button" data-plevel="${i}:${l}" aria-pressed="${l === per.level}">${LEVEL[l]}</button>`).join('')}</div></div>` : '';
+    const bio = per ? `<p class="pbio">${esc(PHYS.e[per.phys].s)} ${phb(per.phys, 'quem foi')}</p>` : '';
+    return `<div class="prow"><span class="dot" style="background:${PCOL[i]};width:22px;height:22px"></span>${field}<div class="seg"><button type="button" data-ptype="${i}:h" aria-pressed="${!p.bot}">Humano</button><button type="button" data-ptype="${i}:b" aria-pressed="${p.bot}">Computador</button></div></div>${lev}${bio}`;
   }).join('');
   return `<div class="modal"><div class="mhead"><h2>Nova partida de HADRON</h2><img src="${LOGO}" alt="LFCA | URCA"></div><p class="lead">Construa hádrons e núcleos atômicos com quarks produzidos pelos aceleradores. Vence quem chegar a ${E.WIN} pontos de estabilidade. Todos jogam no mesmo aparelho; o computador pode ocupar qualquer lugar.</p><p class="note">Criado por Apiano F. Morais, Job S. Furtado Neto e Ivan C. Jardim. Desenvolvido pelo LFCA/URCA.</p>
   <p>Primeira vez? <button class="btn sm" type="button" data-a="tutorial">Fazer o tutorial guiado</button></p>
-  <h3>Jogadores</h3><p class="note">Adversários do computador são cientistas que marcaram a física, cada um com um nível de dificuldade.</p><div class="seg"><button type="button" data-pn="3" aria-pressed="${s.n === 3}">3 jogadores</button><button type="button" data-pn="4" aria-pressed="${s.n === 4}">4 jogadores</button></div>${rows}
+  <h3>Jogadores</h3><p class="note">Para cada lugar do computador, escolha a dificuldade e o cientista que vai jogar.</p><div class="seg"><button type="button" data-pn="3" aria-pressed="${s.n === 3}">3 jogadores</button><button type="button" data-pn="4" aria-pressed="${s.n === 4}">4 jogadores</button></div>${rows}
   <div class="mfoot">${saved && !saved.winner && st && (st.demo || st.phase === 'over') ? '<button class="btn" type="button" data-a="continue">Continuar partida salva</button>' : ''}<button class="btn ghost" type="button" data-a="close">${st && st.demo ? 'Assistir à demonstração' : 'Voltar'}</button><button class="btn pri" type="button" data-a="start">Começar</button></div></div>`;
 }
 function modalRules() {
@@ -617,7 +627,7 @@ function modalRules() {
     <p class="note">As porcentagens somam mais de 100% porque números são compartilhados: um 6 produz Up e Down ao mesmo tempo.</p>
     <h3>Rolagens desta partida (${total})</h3><p class="note">Barras: vezes que cada soma saiu. Traço: o esperado para ${total} rolagens. Em vermelho, os campos.</p><div class="hist">${hist}</div>`;
   }
-  return `<div class="modal wide" role="dialog" aria-label="Regras"><h2>Regras e física</h2><p class="lead">HADRON, criado por Apiano F. Morais, Job S. Furtado Neto e Ivan C. Jardim e desenvolvido pelo LFCA, Laboratório de Física Computacional Aplicada da Universidade Regional do Cariri (URCA).</p><div class="tabs" role="tablist">${tab('regras', 'Regras')}${tab('fisica', 'A física')}${tab('stats', 'Estatística')}</div>${body}<div class="mfoot"><button class="btn pri" type="button" data-a="close">Fechar</button></div></div>`;
+  return `<div class="modal wide" role="dialog" aria-label="Regras"><h2>Regras e Física</h2><p class="lead">HADRON, criado por Apiano F. Morais, Job S. Furtado Neto e Ivan C. Jardim e desenvolvido pelo LFCA, Laboratório de Física Computacional Aplicada da Universidade Regional do Cariri (URCA).</p><div class="tabs" role="tablist">${tab('regras', 'Regras')}${tab('fisica', 'A Física')}${tab('stats', 'Estatística')}</div>${body}<div class="mfoot"><button class="btn pri" type="button" data-a="close">Fechar</button></div></div>`;
 }
 function modalTrade() {
   const pi = st.current, p = st.players[pi], T = ui.trade;
@@ -642,7 +652,7 @@ function modalPhys() {
   const P = PHYS.e[ui.physKey], cat = (PHYS.cats.find(c => c[0] === P.cat) || ['', ''])[1];
   const paras = x => x.split('\n\n').map(q => `<p>${esc(q)}</p>`).join('');
   const see = (P.see || []).filter(k => PHYS.e[k]);
-  return `<div class="modal phys" role="dialog" aria-label="${esc(P.t)}"><span class="cat">A física · ${cat}</span><h2>${esc(P.t)}</h2><p class="sum">${esc(P.s)}</p>${ui.physDeep ? `<div class="deep">${paras(P.d)}</div>` : '<button class="btn" type="button" data-a="deep">Aprofundar</button>'}${see.length ? `<h3>Veja também</h3><div class="chips">${see.map(k => `<button class="chip" type="button" data-physgo="${k}">${esc(PHYS.e[k].t)}</button>`).join('')}</div>` : ''}<div class="mfoot">${ui.physStack.length ? '<button class="btn ghost" type="button" data-a="physback">Voltar</button>' : ''}<button class="btn" type="button" data-a="physall">Toda a física</button><button class="btn pri" type="button" data-a="close">${ui.physReturn ? 'Voltar à janela anterior' : 'Fechar'}</button></div></div>`;
+  return `<div class="modal phys" role="dialog" aria-label="${esc(P.t)}"><span class="cat">A Física · ${cat}</span><h2>${esc(P.t)}</h2><p class="sum">${esc(P.s)}</p>${ui.physDeep ? `<div class="deep">${paras(P.d)}</div>` : '<button class="btn" type="button" data-a="deep">Aprofundar</button>'}${see.length ? `<h3>Veja também</h3><div class="chips">${see.map(k => `<button class="chip" type="button" data-physgo="${k}">${esc(PHYS.e[k].t)}</button>`).join('')}</div>` : ''}<div class="mfoot">${ui.physStack.length ? '<button class="btn ghost" type="button" data-a="physback">Voltar</button>' : ''}<button class="btn" type="button" data-a="physall">Toda a Física</button><button class="btn pri" type="button" data-a="close">${ui.physReturn ? 'Voltar à janela anterior' : 'Fechar'}</button></div></div>`;
 }
 function renderModal() {
   const m = $('#modal');
@@ -741,7 +751,7 @@ function higgsTarget(opts) {
 }
 const TT = () => st.tutorial;
 const TUT = [
-  { expect: 'next', text: () => `Bem-vindo ao <b>HADRON</b>! Você dirige um laboratório de física. Os aceleradores do tabuleiro produzem quarks e, com eles, você monta hádrons e núcleos atômicos. Vence quem chegar primeiro a ${E.WIN} pontos de estabilidade.` },
+  { expect: 'next', text: () => `Bem-vindo ao <b>HADRON</b>! Você dirige um laboratório de Física. Os aceleradores do tabuleiro produzem quarks e, com eles, você monta hádrons e núcleos atômicos. Vence quem chegar primeiro a ${E.WIN} pontos de estabilidade.` },
   { expect: 'next', phys: 'abund', text: () => 'Cada hexágono colorido é um acelerador que produz um tipo de quark, indicado pela letra: <b>u</b>, <b>d</b>, <b>c</b>, <b>s</b>, <b>t</b> ou <b>b</b>. O número na ficha é a soma dos dois dados que ativa a produção; os pontinhos mostram a chance. Up e Down são os mais comuns, como na natureza; Top e Bottom são raríssimos.' },
   { expect: 'next', phys: 'higgs', text: () => 'Os três hexágonos escuros são <b>Campos Quânticos</b>. Quando os dados somam 2, 7 ou 12, em vez de produzir, um campo é ativado: Decaimento (2), Higgs (7) e Fusão (12). As fichas W±, H⁰ e g mostram onde cada campo está.' },
   { expect: 'pick', phys: 'proton', enter: () => { TT().target = bestVertex(st.pending.options); },
@@ -791,7 +801,7 @@ const TUT = [
     text: () => 'Construa mais um Tubo de Deriva no trecho destacado; ele custa 1 Charm + 1 Strange. As conexões levam a intersecções livres, onde você pode construir novos hádrons: Próton, Nêutron, Lambda, Píon ou Káon.',
     done: () => roadCount(0) > TT().roads },
   { expect: 'next', phys: 'force_weak', text: () => 'O que falta saber: o Campo de <b>Decaimento</b> (2) rebaixa um núcleo de um adversário, e o de <b>Fusão</b> (12) obriga dois adversários a fundir quarks. Você pode trocar 4 quarks iguais por 1 com o banco, 3 Energias por 1 quark, ou negociar com outros jogadores. Três mésons, os quatro núcleos ou as quatro forças valem pontos extras.' },
-  { expect: 'done', text: () => 'Pronto, você aprendeu o essencial! Continue esta partida contra Marie e Enrico, no nível fácil, ou comece uma nova. Para ler a física por trás de qualquer peça, toque nela no tabuleiro ou nos botões <b>física</b>.' },
+  { expect: 'done', text: () => 'Pronto, você aprendeu o essencial! Continue esta partida contra Marie e Enrico, no nível fácil, ou comece uma nova. Para ler a Física por trás de qualquer peça, toque nela no tabuleiro ou nos botões <b>Física</b>.' },
 ];
 function tutCheck() {
   let guard = 0;
@@ -841,7 +851,7 @@ function renderCoach(dice) {
   if (s.cta && !(s.expect === 'build' && ui.mode) && !(s.expect === 'card' && pd)) btns += `<button class="btn pri" type="button" data-tut="cta">${s.cta}</button>`;
   if (pd && pd.who === 0 && pd.pick === 'player' && s.expect === 'pick') btns += pd.options.map(i => `<button class="btn" type="button" data-pick="${i}">${pdot(i)} ${esc(st.players[i].name)}</button>`).join('');
   if (s.expect === 'done') btns += '<button class="btn pri" type="button" data-tut="continue">Continuar jogando</button><button class="btn" type="button" data-a="new">Nova partida</button>';
-  if (s.phys) btns += `<button class="btn" type="button" data-phys="${s.phys}">A física</button>`;
+  if (s.phys) btns += `<button class="btn" type="button" data-phys="${s.phys}">A Física</button>`;
   if (s.expect !== 'done') btns += '<button class="btn ghost" type="button" data-tut="exit">Sair do tutorial</button>';
   const boardPickNow = (s.expect === 'pick' && pd && pd.who === 0 && pd.pick !== 'player') || (s.expect === 'build' && ui.mode) || (s.expect === 'card' && pd && pd.who === 0);
   const hint = boardPickNow ? ' <em>Toque no ponto destacado do tabuleiro.</em>' : s.expect === 'auto' ? ' <em>Aguarde a jogada dos adversários…</em>' : '';
@@ -877,7 +887,7 @@ function startTutorial() {
 
 // ------------------------------------------------------------ eventos
 function onClick(ev) {
-  const t = ev.target.closest('[data-a],[data-pick],[data-build],[data-bg],[data-bt],[data-en],[data-li],[data-card],[data-pn],[data-ptype],[data-tab],[data-tr],[data-tto],[data-v],[data-e],[data-h],[data-phys],[data-physgo],[data-jump],[data-tut]');
+  const t = ev.target.closest('[data-a],[data-pick],[data-build],[data-bg],[data-bt],[data-en],[data-li],[data-card],[data-pn],[data-ptype],[data-tab],[data-tr],[data-tto],[data-v],[data-e],[data-h],[data-phys],[data-physgo],[data-jump],[data-tut],[data-plevel]');
   if (!t) return;
   const d = t.dataset;
   if (d.a === 'ovclose' && ev.target !== t) return;
@@ -905,13 +915,18 @@ function onClick(ev) {
   if (d.li) return act({ type: 'li', get: d.li });
   if (d.card) return act({ type: 'card', id: d.card });
   if (d.pn) { ui.setup.n = +d.pn; return renderModal(); }
+  if (d.plevel) {
+    const [i, l] = d.plevel.split(':').map(Number);
+    ui.setup.players[i].persona = pickPersona(ui.setup, i, l);
+    return renderModal();
+  }
   if (d.ptype) {
     readNames();
     const [i, k] = d.ptype.split(':'), s = ui.setup, P = s.players[+i];
     P.bot = k === 'b';
     if (P.bot) {
       const taken = new Set(s.players.slice(0, s.n).filter((q, j) => j !== +i && q.bot).map(q => q.persona));
-      if (!P.persona || taken.has(P.persona)) P.persona = (PERSONAS.find(x => !taken.has(x.id)) || PERSONAS[0]).id;
+      if (!P.persona || taken.has(P.persona)) P.persona = pickPersona(s, +i, (PERSONA(P.persona) || PERSONAS[3]).level);
     }
     return renderModal();
   }
@@ -945,6 +960,8 @@ function onClick(ev) {
         const per = p.bot ? PERSONA(p.persona) || PERSONAS[3] : null;
         return per ? { name: per.name, color: PCOL[i], bot: true, level: per.level, persona: per.id } : { name: (p.name || '').trim() || DEFAULT_NAMES[i], color: PCOL[i], bot: false };
       });
+      const seen = {};
+      for (const pl of players) { seen[pl.name] = (seen[pl.name] || 0) + 1; if (seen[pl.name] > 1) pl.name += ' ' + ['', '', 'II', 'III', 'IV'][seen[pl.name]]; }
       if (players.every(p => p.bot)) toast('Todos são computador: a partida vai rodar sozinha.');
       return startGame(players);
     }
