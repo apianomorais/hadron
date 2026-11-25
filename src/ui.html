@@ -67,7 +67,8 @@ button:disabled{cursor:not-allowed;opacity:.42}
 .me .vp{font:700 30px/1 "Space Grotesk",sans-serif}
 .me .vp small{font-size:15px;color:var(--mute);font-weight:500}
 .res{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-top:12px}
-.res div{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:6px 2px 4px;text-align:center}
+.res .rc{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:6px 2px 4px;text-align:center;color:inherit;font:inherit;cursor:pointer}
+.res .rc:hover{border-color:#4a5862}
 .res .qd{width:24px;height:24px;font-size:15px;margin:0}
 .res .n{display:block;font:700 19px/1.2 "Space Grotesk",sans-serif}
 .res .lab{display:block;font-size:11px;color:var(--mute);white-space:nowrap}
@@ -147,12 +148,35 @@ ol.interp li{margin:6px 0;color:#d4dde1}
 .mhead img{height:88px;width:auto;flex:none;margin:-4px -2px 0 0}
 @media(max-width:640px){.mhead img{height:64px}.foot img{height:60px}}
 .foot b{color:var(--ink);font-weight:600}
+.phb{min-height:30px;padding:0 10px;border-radius:999px;border:1px solid #34505f;background:transparent;color:#9fd8ff;font-size:12px;font-weight:600;margin-left:6px;vertical-align:1px}
+.phb:hover{background:#16242c}
+svg [data-phys]{cursor:pointer}
+.legend button{background:none;border:0;color:inherit;font:inherit;padding:4px 2px;min-height:32px;cursor:pointer;border-radius:6px}
+.legend button:hover b{text-decoration:underline}
+.pnb{background:none;border:0;padding:0;color:inherit;font:inherit;font-weight:700;cursor:pointer;text-decoration:underline dotted #6c7d87;text-underline-offset:4px}
+.banner.coach{border-color:#7a5a1e;background:linear-gradient(180deg,#1d1a12,var(--panel))}
+.coach .stepno{font:600 13px Inter,sans-serif;color:var(--e)}
+.coach .msg{flex:1 1 380px}
+.prow select{min-height:44px;font-size:16px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:0 10px;width:100%}
+.pbio{margin:-2px 0 8px 32px;font-size:13px;color:var(--mute)}
+.pbio b{color:var(--ink);font-weight:600}
+.phys .cat{display:block;color:var(--e);font-size:13px;font-weight:600;margin-bottom:4px}
+.phys .sum{font-size:17px;line-height:1.55;color:var(--ink)}
+.phys .deep{border-top:1px solid var(--line);margin-top:12px;padding-top:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{min-height:38px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--panel2);font-size:14px}
+.chip:hover{border-color:#4a5862}
+.pent{border-top:1px solid var(--line);padding:12px 0}
+.pent h4{margin:0 0 4px;font:600 16px "Space Grotesk",Inter,sans-serif}
+.pent p{margin:4px 0}
+details summary{cursor:pointer;color:#9fd8ff;font-weight:600;padding:6px 0;min-height:32px}
 .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#ffe3dc;color:#2a0c08;padding:10px 16px;border-radius:10px;font-weight:600;z-index:30;max-width:calc(100% - 32px);box-shadow:0 6px 30px #0008}
 @media(max-width:980px){
   .app{grid-template-columns:minmax(0,1fr);grid-template-areas:"top" "banner" "board" "panel" "side" "foot"}
   .banner{position:sticky;top:0;z-index:6;box-shadow:0 8px 24px #000a}
   .panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));align-items:start}
   .boardbox svg{max-height:none}
+  .banner.coach{position:static;box-shadow:none}
 }
 @media(max-width:640px){
   .side{grid-template-columns:minmax(0,1fr)}
@@ -162,6 +186,8 @@ ol.interp li{margin:6px 0;color:#d4dde1}
   .top h1 small,.top .long{display:none}
   .modal{padding:16px}
   .modal h2{font-size:24px}
+  .coach .msg{order:0;flex-basis:100%}
+  .coach .dice{display:none}
 }
 @media(prefers-reduced-motion:reduce){.dice.roll svg,.pulse{animation:none}}
 </style>
@@ -171,7 +197,8 @@ ol.interp li{margin:6px 0;color:#d4dde1}
   <header class="top">
     <h1>HADRON <small id="sub">Física de partículas em 2d6</small></h1>
     <div class="sp"></div>
-    <button class="btn ghost sm" id="bRules" type="button">Regras<span class="long"> e estatística</span></button>
+    <button class="btn ghost sm" id="bTut" type="button">Tutorial</button>
+    <button class="btn ghost sm" id="bRules" type="button">Regras<span class="long"> e física</span></button>
     <button class="btn sm" id="bNew" type="button">Nova partida</button>
   </header>
   <section class="banner" id="banner" aria-live="polite"></section>
@@ -192,6 +219,9 @@ ol.interp li{margin:6px 0;color:#d4dde1}
 /*ENGINE*/
 </script>
 <script>
+/*PHYSICS*/
+</script>
+<script>
 {
 const E = HadronEngine;
 const PCOL = ['#ffffff', '#ff8c3a', '#ff5ca8', '#c8f04a'];
@@ -202,9 +232,29 @@ const DEFAULT_NAMES = ['Apiano', 'Ivan', 'Job', 'César']; // César Lattes, cod
 const SAVE_KEY = 'hadron.save.v1';
 const LOGO = '{{LOGO}}';
 const S = 50;
+const PHYS = HADRON_PHYS;
+const PERSONAS = [
+  { id: 'marie', name: 'Marie', level: 1, phys: 'sci_marie' },
+  { id: 'enrico', name: 'Enrico', level: 1, phys: 'sci_enrico' },
+  { id: 'elisa', name: 'Elisa', level: 1, phys: 'sci_elisa' },
+  { id: 'lise', name: 'Lise', level: 2, phys: 'sci_lise' },
+  { id: 'mario', name: 'Mário', level: 2, phys: 'sci_mario' },
+  { id: 'maria', name: 'Maria', level: 2, phys: 'sci_maria' },
+  { id: 'wu', name: 'Chien-Shiung', level: 3, phys: 'sci_wu' },
+  { id: 'murray', name: 'Murray', level: 3, phys: 'sci_murray' },
+  { id: 'emmy', name: 'Emmy', level: 3, phys: 'sci_emmy' },
+];
+const PERSONA = id => PERSONAS.find(x => x.id === id);
+const LEVEL = { 1: 'Fácil', 2: 'Médio', 3: 'Difícil' };
+const SEAT_PERSONA = ['lise', 'mario', 'elisa', 'emmy'];
+const PH_TILE = { u: 'q_u', d: 'q_d', c: 'q_c', s: 'q_s', t: 'q_t', b: 'q_b', higgs: 'higgs', decay: 'force_weak', fusion: 'force_strong' };
+const PH_TOKEN = { higgs: 'higgs', decay: 'force_weak', fusion: 'force_strong' };
+const PH_CARD = { forte: 'force_strong', fraca: 'force_weak', em: 'force_em', gravidade: 'force_grav', gauge: 'gauge', blindagem: 'shield', estab: 'stab', unificada: 'unif', fusao: 'nuc_fusion', fissao: 'nuc_fission', aniquilacao: 'annihilation', descoberta: 'discovery', colaboracao: 'collab', nobel: 'nobel', nature: 'nobel' };
+const PH_PENDING = { higgsHex: 'higgs', higgsSteal: 'higgs', decayPick: 'force_weak', fusionPick1: 'force_strong', fusionPick2: 'force_strong' };
+const PH_RES = k => k === 'e' ? 'energia' : 'q_' + k;
 
 let st = null;
-const ui = { mode: null, modal: null, rulesTab: 'regras', bankGive: null, bankGet: null, trade: null, lastDice: '', overShown: false, setup: null, toastT: 0 };
+const ui = { mode: null, modal: null, rulesTab: 'regras', bankGive: null, bankGet: null, trade: null, lastDice: '', overShown: false, setup: null, toastT: 0, physKey: null, physDeep: false, physStack: [], physReturn: null };
 let botTimer = 0;
 
 const $ = s => document.querySelector(s);
@@ -214,6 +264,8 @@ const qd = k => `<i class="qd${k === 'e' ? ' e' : ''}" style="--k:${QHEX[k]}">${
 const costHTML = c => `<span class="cost">${Object.entries(c).filter(([, n]) => n > 0).map(([k, n]) => `<span>${qd(k)}${n}</span>`).join('')}</span>`;
 const pdot = i => `<span class="dot" style="background:${esc(st.players[i].color)}"></span>`;
 const pname = i => `${pdot(i)}<span>${esc(st.players[i].name)}</span>`;
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const phb = (key, label = 'física') => PHYS.e[key] ? `<button class="phb" type="button" data-phys="${key}" aria-label="A física: ${esc(PHYS.e[key].t)}">${label}</button>` : '';
 function mix(a, b, t) {
   const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
   const A = p(a), B = p(b);
@@ -224,7 +276,7 @@ function toast(msg) {
   clearTimeout(ui.toastT); ui.toastT = setTimeout(() => { t.hidden = true; }, 2800);
 }
 function save() {
-  if (!st || st.demo) return;
+  if (!st || st.demo || tutActive()) return;
   try { localStorage.setItem(SAVE_KEY, JSON.stringify(st)); } catch (e) { /* armazenamento indisponível */ }
 }
 function loadSaved() {
@@ -234,6 +286,10 @@ const actor = () => st.pending ? st.pending.who : st.current;
 const humanTurn = () => st.phase !== 'over' && !st.players[actor()].bot;
 
 function act(a) {
+  if (tutActive()) {
+    if (!tutAllows(a)) { toast('No tutorial, siga o passo destacado.'); render(); return; }
+    if (a.type === 'roll' && st.tutorial.dice) { a = { ...a, dice: st.tutorial.dice }; st.tutorial.dice = null; }
+  }
   try { E.apply(st, a); ui.mode = null; }
   catch (e) { toast(e.message); }
   save(); render();
@@ -265,6 +321,13 @@ function tracks(x0, y0, W, H) {
 function highlights() {
   const hl = { v: new Set(), e: new Set(), h: new Set() };
   if (!st) return hl;
+  const ts = tutStep();
+  if (ts) {
+    const T = st.tutorial, pd0 = st.pending;
+    if (ts.expect === 'build' && ui.mode && ui.mode.kind === 'place') { (E.BUILD[ts.kind].tier === 3 ? hl.e : hl.v).add(T.target); return hl; }
+    if (ts.expect === 'pick' && !ts.any && pd0 && pd0.who === 0) { ({ vertex: hl.v, edge: hl.e, hex: hl.h })[pd0.pick]?.add(T.target); return hl; }
+    if (!['pick', 'card'].includes(ts.expect)) return hl;
+  }
   if (ui.mode && ui.mode.kind === 'place') {
     const tier = E.BUILD[ui.mode.build].tier;
     for (const s of ui.mode.spots) (tier === 3 ? hl.e : hl.v).add(s);
@@ -283,7 +346,7 @@ function hexSVG(h) {
   const x = h.x * S, y = h.y * S;
   const prod = E.isProd(h.kind);
   const blocked = st.tokens.higgs === h.id && prod;
-  let g = `<g><title>${esc(E.TILE_NAME[h.kind])}${prod ? ' — produz ' + E.QN[h.kind] : ''}, número ${h.num} (${pct(E.prob(h.num))} por rolagem)</title>`;
+  let g = `<g data-phys="${PH_TILE[h.kind]}"><title>${esc(E.TILE_NAME[h.kind])}${prod ? ' — produz ' + E.QN[h.kind] : ''}, número ${h.num} (${pct(E.prob(h.num))} por rolagem)</title>`;
   if (prod) {
     g += `<polygon points="${hexPts(x, y, S - 2.5)}" fill="url(#g-${h.kind})" stroke="${mix(QHEX[h.kind], '#ffffff', .75)}" stroke-width="2"/>`;
     g += `<polygon points="${hexPts(x, y, S - 9)}" fill="none" stroke="#ffffff" stroke-opacity=".08" stroke-width="1.5"/>`;
@@ -310,20 +373,20 @@ function tokenSVG(tok) {
   const slot = E.FIELDS.filter(k => st.tokens[k] === h.id).indexOf(tok);
   const off = [[-24, -4], [24, -4], [0, -35]][slot];
   const col = { higgs: QHEX.e, decay: '#8fb7ff', fusion: '#ff9d7a' }[tok];
-  return `<g><title>${E.FIELD_NAME[tok]}</title><circle cx="${x + off[0]}" cy="${y + off[1]}" r="11.5" fill="#0a0d10" stroke="${col}" stroke-width="2.5"/><text x="${x + off[0]}" y="${y + off[1] + 4}" text-anchor="middle" font-family="Space Grotesk,Inter,sans-serif" font-weight="700" font-size="11" fill="${col}">${E.TOKEN_SYM[tok]}</text></g>`;
+  return `<g data-phys="${PH_TOKEN[tok]}"><title>${E.FIELD_NAME[tok]}</title><circle cx="${x + off[0]}" cy="${y + off[1]}" r="11.5" fill="#0a0d10" stroke="${col}" stroke-width="2.5"/><text x="${x + off[0]}" y="${y + off[1] + 4}" text-anchor="middle" font-family="Space Grotesk,Inter,sans-serif" font-weight="700" font-size="11" fill="${col}">${E.TOKEN_SYM[tok]}</text></g>`;
 }
 function roadSVG(e, r) {
   const E2 = st.board.edges[e], A = st.board.vertices[E2.v[0]], B = st.board.vertices[E2.v[1]];
   const k = .2, x1 = (A.x + (B.x - A.x) * k) * S, y1 = (A.y + (B.y - A.y) * k) * S, x2 = (B.x + (A.x - B.x) * k) * S, y2 = (B.y + (A.y - B.y) * k) * S;
   const col = esc(st.players[r.owner].color);
-  let g = `<g><title>${E.BUILD[r.type].name} de ${esc(st.players[r.owner].name)}</title><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#05070a" stroke-width="12" stroke-linecap="round"/><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-width="7" stroke-linecap="round"/>`;
+  let g = `<g data-phys="${r.type}"><title>${E.BUILD[r.type].name} de ${esc(st.players[r.owner].name)}</title><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#05070a" stroke-width="12" stroke-linecap="round"/><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-width="7" stroke-linecap="round"/>`;
   if (r.type === 'magnet') g += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#05070a" stroke-width="2.2" stroke-dasharray="4 4"/>`;
   if (r.type === 'detector') g += `<rect x="${(x1 + x2) / 2 - 5}" y="${(y1 + y2) / 2 - 5}" width="10" height="10" rx="2" fill="#05070a" stroke="${col}" stroke-width="2"/>`;
   return g + '</g>';
 }
 function bldSVG(v, b) {
   const V = st.board.vertices[v], x = V.x * S, y = V.y * S, B = E.BUILD[b.type], col = esc(st.players[b.owner].color);
-  let g = `<g><title>${B.name} de ${esc(st.players[b.owner].name)}${b.shield ? ' (protegido)' : ''}</title>`;
+  let g = `<g data-phys="${b.type}"><title>${B.name} de ${esc(st.players[b.owner].name)}${b.shield ? ' (protegido)' : ''}</title>`;
   if (b.shield) g += `<circle cx="${x}" cy="${y}" r="${B.tier === 2 ? 23 : 18}" fill="none" stroke="#9fe8ff" stroke-width="2" stroke-dasharray="3 3"/>`;
   if (B.tier === 1) {
     g += `<circle cx="${x}" cy="${y}" r="13" fill="${col}" stroke="#05070a" stroke-width="3"/>`;
@@ -366,7 +429,7 @@ function renderBoard() {
 }
 function renderLegend() {
   const ts = E.tileStats();
-  $('#legend').innerHTML = '<span>Chance de produzir a cada rolagem:</span>' + E.Q.map(k => `<span>${qd(k)}<b>${E.QN[k]}</b> ${pct(ts[k].p)}</span>`).join('');
+  $('#legend').innerHTML = '<span>Chance de produzir a cada rolagem (toque para ler a física):</span>' + E.Q.map(k => `<button type="button" data-phys="${PH_RES(k)}">${qd(k)}<b>${E.QN[k]}</b> ${pct(ts[k].p)}</button>`).join('');
 }
 
 // ------------------------------------------------------------ faixa de instrução
@@ -377,6 +440,7 @@ function dieSVG(n) {
 function renderBanner() {
   const b = $('#banner');
   if (!st) { b.innerHTML = ''; return; }
+  b.className = 'banner';
   let dice = '';
   if (st.dice) {
     const key = st.turn + ':' + st.dice.join();
@@ -417,6 +481,8 @@ function renderBanner() {
     msg = 'Negocie, construa e jogue até 1 carta. <em>Top e Bottom decaem no fim do turno.</em>';
     opts = '<button class="btn pri" type="button" data-a="end">Encerrar turno</button>';
   }
+  if (tutActive()) return renderCoach(dice);
+  if (pd && PH_PENDING[pd.kind]) opts += `<button class="btn ghost" type="button" data-phys="${PH_PENDING[pd.kind]}">A física</button>`;
   b.innerHTML = `${dice}<div class="who">${pname(who)}</div><div class="msg">${msg}</div><div class="opts">${opts}</div>`;
 }
 
@@ -432,24 +498,28 @@ function buildRow(kind, canAct) {
   else if (ok.every(at => E.payPlan(p, E.costOf(st, pi, kind, at)).useE)) why = 'Usa 1 Energia no lugar da partícula que falta';
   const vpTxt = B.vp ? ` <small>${B.vp} pt${B.vp > 1 ? 's' : ''}</small>` : '';
   const dis = !canAct || !ok.length;
-  return `<div class="brow" title="${esc(B.text)}"><span class="sym t${B.tier}">${B.sym || '—'}</span><div><span class="nm">${B.name}${vpTxt}</span><span class="why">${cost}${why ? ' · ' + why : ''}</span><span class="why">${esc(B.text)}</span></div><button class="btn sm" type="button" data-build="${kind}" ${dis ? 'disabled' : ''}>Construir</button></div>`;
+  return `<div class="brow" title="${esc(B.text)}"><span class="sym t${B.tier}">${B.sym || '—'}</span><div><span class="nm">${B.name}${vpTxt}</span>${phb(kind)}<span class="why">${cost}${why ? ' · ' + why : ''}</span><span class="why">${esc(B.text)}</span></div><button class="btn sm" type="button" data-build="${kind}" ${dis ? 'disabled' : ''}>Construir</button></div>`;
 }
 function renderPanel() {
   const el = $('#panel');
   const pi = st.current, p = st.players[pi];
-  const canAct = st.phase === 'play' && !st.pending && st.rolled && !p.bot && !st.demo;
+  const base = st.phase === 'play' && !st.pending && st.rolled && !p.bot && !st.demo;
+  const ts = tutStep();
+  const canAct = base && !ts;
+  const canBuild = k => canAct || (base && !!ts && ts.expect === 'build' && ts.kind === k);
+  const canCard = id => canAct || (base && !!ts && ts.expect === 'card' && ts.card === id);
   const vb = E.vpBreak(st, pi);
   let h = `<div class="card"><div class="me">${pdot(pi)}<h2>${esc(p.name)}</h2><span class="vp num">${vb.total}<small> / ${E.WIN}</small></span></div>`;
-  h += '<div class="res">' + ['u', 'd', 'c', 's', 't', 'b', 'e'].map(k => `<div class="${k === 't' || k === 'b' ? 'unst' : ''}" title="${E.QN[k]}${k === 't' || k === 'b' ? ' (instável: decai no fim do turno)' : ''}">${qd(k)}<span class="n">${p.res[k]}</span><span class="lab">${E.QN[k]}</span></div>`).join('') + '</div>';
+  h += '<div class="res">' + ['u', 'd', 'c', 's', 't', 'b', 'e'].map(k => `<button type="button" class="rc${k === 't' || k === 'b' ? ' unst' : ''}" data-phys="${PH_RES(k)}" title="${E.QN[k]}${k === 't' || k === 'b' ? ' (instável: decai no fim do turno)' : ''}. Toque para ler a física.">${qd(k)}<span class="n">${p.res[k]}</span><span class="lab">${E.QN[k]}</span></button>`).join('') + '</div>';
   if (st.phase === 'setup') h += '<p class="note">Preparação: cada jogador posiciona um Próton e depois um Nêutron, cada um com um Tubo de Deriva, sem custo. Os recursos iniciais vêm dos hexágonos do Nêutron.</p>';
   else if (p.bot) h += '<p class="note">O computador está jogando este turno.</p>';
   else if (st.flags.discount) h += '<p class="note">Força Nuclear Forte ativa: o próximo bárion custa 1 Up a menos.</p>';
   if (p.blind) h += '<p class="note">Blindagem Nuclear ativa até o seu próximo turno.</p>';
   h += '</div>';
 
-  h += '<div class="card"><h2>Construir</h2><h3>Hádrons (como aldeias)</h3>' + ['proton', 'neutron', 'lambda', 'pion', 'kaon'].map(k => buildRow(k, canAct)).join('');
-  h += '<h3>Núcleos (evoluem no mesmo lugar)</h3>' + ['deuterium', 'helium', 'lithium', 'carbon'].map(k => buildRow(k, canAct)).join('');
-  h += '<h3>Aceleradores (conexões)</h3>' + ['drift', 'magnet', 'detector'].map(k => buildRow(k, canAct)).join('') + '</div>';
+  h += '<div class="card"><h2>Construir</h2><h3>Hádrons (como aldeias)</h3>' + ['proton', 'neutron', 'lambda', 'pion', 'kaon'].map(k => buildRow(k, canBuild(k))).join('');
+  h += '<h3>Núcleos (evoluem no mesmo lugar)</h3>' + ['deuterium', 'helium', 'lithium', 'carbon'].map(k => buildRow(k, canBuild(k))).join('');
+  h += '<h3>Aceleradores (conexões)</h3>' + ['drift', 'magnet', 'detector'].map(k => buildRow(k, canBuild(k))).join('') + '</div>';
 
   const r = E.bankRatio(st, pi);
   h += `<div class="card"><h2>Trocar</h2><h3>Banco ${r}:1${r === 2 ? ' (Píon)' : ''}</h3>`;
@@ -469,11 +539,11 @@ function renderPanel() {
   if (E.canUnify(st, pi)) h += `<p class="note">Você tem as 4 forças básicas.</p><button class="btn pri sm" type="button" data-a="unify" ${canAct ? '' : 'disabled'}>Unificação das Forças (+2 pontos)</button>`;
   h += '<div class="hand">' + (uniq.length ? uniq.map(id => {
     const C = E.CARDS[id], n = p.cards.filter(c => c === id).length;
-    const playable = canAct && E.cardPlayable(st, pi, id);
+    const playable = canCard(id) && E.cardPlayable(st, pi, id);
     const why = !playable && canAct ? E.whyNotCard(st, pi, id) : '';
-    return `<div class="ic ${C.group}"><div class="hd"><b>${esc(C.name)}${n > 1 ? ' ×' + n : ''}</b><span class="g">${GROUP[C.group]}</span></div><p>${esc(C.text)}</p>${id === 'estab' ? '<span class="why">Guardada para reagir a campos.</span>' : `<button class="btn sm" type="button" data-card="${id}" ${playable ? '' : 'disabled'}>Jogar</button> <span class="why">${esc(why)}</span>`}</div>`;
+    return `<div class="ic ${C.group}"><div class="hd"><b>${esc(C.name)}${n > 1 ? ' ×' + n : ''}</b><span class="g">${GROUP[C.group]}</span>${phb(PH_CARD[id])}</div><p>${esc(C.text)}</p>${id === 'estab' ? '<span class="why">Guardada para reagir a campos.</span>' : `<button class="btn sm" type="button" data-card="${id}" ${playable ? '' : 'disabled'}>Jogar</button> <span class="why">${esc(why)}</span>`}</div>`;
   }).join('') : '<p class="note">Sem cartas na mão.</p>') + '</div>';
-  if (p.points.length) h += `<h3>Conquistas</h3><p class="note">${p.points.map(c => esc(E.CARDS[c].name)).join(', ')} (+${p.points.length})</p>`;
+  if (p.points.length) h += `<h3>Conquistas</h3><p class="note">${p.points.map(c => esc(E.CARDS[c].name)).join(', ')} (+${p.points.length}) ${phb('nobel')}</p>`;
   h += '</div>';
   el.innerHTML = h;
 }
@@ -490,7 +560,7 @@ function renderPlayers() {
     if (vb.cards) badges.push(`Conquistas +${vb.cards}`);
     if (p.blind) badges.push('Blindagem');
     const q = E.qCount(p);
-    return `<div class="pl${i === st.current ? ' cur' : ''}">${pdot(i)}<div><span class="pn">${esc(p.name)}</span>${p.bot ? '<span class="tag">computador</span>' : ''}</div><span class="pv num">${vb.total}</span><div class="st">${q} quark${q === 1 ? '' : 's'} · ${p.res.e} Energia · ${p.cards.length} carta${p.cards.length === 1 ? '' : 's'} · cadeia ${st.chains[i] || 0}</div>${badges.length ? `<div class="badges">${badges.map(b => `<span class="badge">${b}</span>`).join('')}</div>` : ''}</div>`;
+    return `<div class="pl${i === st.current ? ' cur' : ''}">${pdot(i)}<div>${p.persona && PERSONA(p.persona) ? `<button type="button" class="pnb pn" data-phys="${PERSONA(p.persona).phys}">${esc(p.name)}</button>` : `<span class="pn">${esc(p.name)}</span>`}${p.bot ? `<span class="tag">computador · ${LEVEL[p.level] || 'Médio'}</span>` : ''}</div><span class="pv num">${vb.total}</span><div class="st">${q} quark${q === 1 ? '' : 's'} · ${p.res.e} Energia · ${p.cards.length} carta${p.cards.length === 1 ? '' : 's'} · cadeia ${st.chains[i] || 0}</div>${badges.length ? `<div class="badges">${badges.map(b => `<span class="badge">${b}</span>`).join('')}</div>` : ''}</div>`;
   }).join('');
 }
 function renderLog() {
@@ -499,14 +569,24 @@ function renderLog() {
 
 // ------------------------------------------------------------ janelas
 function setupDefaults() {
-  return { n: 3, players: DEFAULT_NAMES.map(name => ({ name, bot: false })) };
+  return { n: 3, players: DEFAULT_NAMES.map((name, i) => ({ name, bot: false, persona: SEAT_PERSONA[i] })) };
+}
+function personaSelect(s, i, p) {
+  const taken = new Set(s.players.slice(0, s.n).filter((q, j) => j !== i && q.bot).map(q => q.persona));
+  return `<select id="p${i}persona" data-seat="${i}" aria-label="Personagem do jogador ${i + 1}">${[1, 2, 3].map(l => `<optgroup label="${LEVEL[l]}">${PERSONAS.filter(x => x.level === l).map(x => `<option value="${x.id}"${x.id === p.persona ? ' selected' : ''}${taken.has(x.id) ? ' disabled' : ''}>${esc(x.name)} · ${esc(PHYS.e[x.phys].t.replace(/ \(.*/, ''))}</option>`).join('')}</optgroup>`).join('')}</select>`;
 }
 function modalNew() {
   const s = ui.setup || (ui.setup = setupDefaults());
   const saved = loadSaved();
-  const rows = s.players.slice(0, s.n).map((p, i) => `<div class="prow"><span class="dot" style="background:${PCOL[i]};width:22px;height:22px"></span><input id="p${i}name" maxlength="16" value="${esc(p.name)}" aria-label="Nome do jogador ${i + 1}"><div class="seg"><button type="button" data-ptype="${i}:h" aria-pressed="${!p.bot}">Humano</button><button type="button" data-ptype="${i}:b" aria-pressed="${p.bot}">Computador</button></div></div>`).join('');
+  const rows = s.players.slice(0, s.n).map((p, i) => {
+    const per = p.bot ? PERSONA(p.persona) : null;
+    const field = p.bot ? personaSelect(s, i, p) : `<input id="p${i}name" maxlength="16" value="${esc(p.name)}" aria-label="Nome do jogador ${i + 1}">`;
+    const bio = per ? `<p class="pbio"><b>Nível ${LEVEL[per.level].toLowerCase()}.</b> ${esc(PHYS.e[per.phys].s)} ${phb(per.phys, 'quem foi')}</p>` : '';
+    return `<div class="prow"><span class="dot" style="background:${PCOL[i]};width:22px;height:22px"></span>${field}<div class="seg"><button type="button" data-ptype="${i}:h" aria-pressed="${!p.bot}">Humano</button><button type="button" data-ptype="${i}:b" aria-pressed="${p.bot}">Computador</button></div></div>${bio}`;
+  }).join('');
   return `<div class="modal"><div class="mhead"><h2>Nova partida de HADRON</h2><img src="${LOGO}" alt="LFCA | URCA"></div><p class="lead">Construa hádrons e núcleos atômicos com quarks produzidos pelos aceleradores. Vence quem chegar a ${E.WIN} pontos de estabilidade. Todos jogam no mesmo aparelho; o computador pode ocupar qualquer lugar.</p><p class="note">Criado por Apiano F. Morais, Job S. Furtado Neto e Ivan C. Jardim. Desenvolvido pelo LFCA/URCA.</p>
-  <h3>Jogadores</h3><div class="seg"><button type="button" data-pn="3" aria-pressed="${s.n === 3}">3 jogadores</button><button type="button" data-pn="4" aria-pressed="${s.n === 4}">4 jogadores</button></div>${rows}
+  <p>Primeira vez? <button class="btn sm" type="button" data-a="tutorial">Fazer o tutorial guiado</button></p>
+  <h3>Jogadores</h3><p class="note">Adversários do computador são cientistas que marcaram a física, cada um com um nível de dificuldade.</p><div class="seg"><button type="button" data-pn="3" aria-pressed="${s.n === 3}">3 jogadores</button><button type="button" data-pn="4" aria-pressed="${s.n === 4}">4 jogadores</button></div>${rows}
   <div class="mfoot">${saved && !saved.winner && st && (st.demo || st.phase === 'over') ? '<button class="btn" type="button" data-a="continue">Continuar partida salva</button>' : ''}<button class="btn ghost" type="button" data-a="close">${st && st.demo ? 'Assistir à demonstração' : 'Voltar'}</button><button class="btn pri" type="button" data-a="start">Começar</button></div></div>`;
 }
 function modalRules() {
@@ -521,19 +601,10 @@ function modalRules() {
     <h3>Campos Quânticos</h3><ol class="interp"><li><b>Higgs (7)</b>: mova a ficha H⁰; o hexágono fica sem produção e você rouba 1 quark de um vizinho dele. Káon, Carbono-12 e Simetria Gauge ignoram o bloqueio.</li><li><b>Decaimento (2)</b>: um núcleo de oponente desce um nível (Lítio → Hélio → Deutério → hádron) e os vizinhos capturam 1 quark leve cada. Sem alvo, você ganha 1 Energia.</li><li><b>Fusão (12)</b>: dois oponentes perdem 2 quarks aleatórios cada e ganham 1 ponto cada por um Núcleo Colaborativo.</li><li><b>Unificação Eletrofraca</b>: se duas fichas de campo pararem no mesmo hexágono, todos pescam 1 carta.</li></ol>
     <h3>Cartas de Interação (${E.DECK_SIZE})</h3><div class="scroll"><table><thead><tr><th>Carta</th><th class="r">Qtd.</th><th>Tipo</th><th>Efeito</th></tr></thead><tbody>${Object.values(E.CARDS).map(C => `<tr><td><b>${esc(C.name)}</b></td><td class="r">${C.n}</td><td>${GROUP[C.group]}</td><td>${esc(C.text)}</td></tr>`).join('')}</tbody></table></div>
     <h3>Pontos</h3><p>Hádron 1 · Deutério, Hélio-4 e Lítio-7: 2 · Carbono-12: 3 · Maior Cadeia de Aceleradores (mínimo ${E.LONG_MIN}, Ímã vale 2): 2 · Nobel e Nature: 1 cada · Núcleo Colaborativo: 1 · Bóson de Higgs (ter Deutério, Hélio-4, Lítio-7 e Carbono-12 ao mesmo tempo): 3 · Supersimetria (3 mésons): 2 · Unificação das Forças (descartar as 4 forças básicas): 2.</p>`;
-  } else if (t === 'escolhas') {
-    body = `<p>Onde o GDD deixava a regra aberta ou entrava em conflito, o protótipo decidiu assim. Tudo pode ser ajustado.</p><ol class="interp">
-    <li>Tiles: a distribuição que fechamos na conversa (Up 6, 8, 9 · Down 4, 6, 8 · Charm 3, 5, 9, 10 · Strange 4, 5, 10, 11 · Top 11 · Bottom 3 · campos 2, 7, 12). Os hexágonos são embaralhados a cada partida, sem 6 e 8 vizinhos.</li>
-    <li>Núcleos evoluem sobre um hádron seu e você paga só os núcleons que faltam. Por isso o Carbono-12 custa 2 Energias sobre um Hélio-4, que já tem os 2 prótons e 2 nêutrons pedidos no GDD.</li>
-    <li>O GDD só diz que o Deutério produz 2. Aqui todo núcleo produz 2, como as cidades do Catan.</li>
-    <li>O GDD manda resolver o decaimento de Top/Bottom antes da construção e também diz que eles valem no turno da coleta. Valeu a segunda leitura: decaem no fim do turno.</li>
-    <li>Cartas de Reação custam 1 Energia (o GDD cita "ativar cartas" como uso da Energia). Aniquilação paga o próprio par: 2 quarks iguais + 2 Energias, já que antipartícula = partícula + 2 Energias.</li>
-    <li>Lambda: a "habilidade especial" virou pescar 1 carta e poder virar núcleo como um Próton. Lítio-7: "combina hádrons" virou 1 Up + 1 Down → 1 Top ou Bottom por turno. Píon: banco 2:1 para qualquer quark.</li>
-    <li>Fusão (12): a "construção colaborativa" é um Núcleo Colaborativo que vale 1 ponto para cada um dos dois envolvidos.</li>
-    <li>Bóson de Higgs pedia 5 tipos de núcleo, mas só existem 4. Virou ter os 4 ao mesmo tempo.</li>
-    <li>O GDD cita cartas que valem 1 ponto sem listá-las: entraram 2 Prêmio Nobel e 2 Publicação na Nature.</li>
-    <li>Sem descarte de metade da mão no 7, porque o GDD não pede. Limites de peças e o mínimo de 5 para a maior cadeia vêm do Catan.</li>
-    <li>Simetria Gauge protege também contra Fissão e Aniquilação. Estabilização Quântica só cancela campos ativados pelos dados.</li></ol>`;
+  } else if (t === 'fisica') {
+    const paras = x => x.split('\n\n').map(q => `<p>${esc(q)}</p>`).join('');
+    body = `<p class="lead">Cada peça do jogo tem uma história real. Leia o resumo e abra "Aprofundar" para os detalhes de nível universitário.</p><div class="chips">${PHYS.cats.map(([id, label]) => `<button class="chip" type="button" data-jump="${id}">${label}</button>`).join('')}</div>`
+      + PHYS.cats.map(([id, label]) => `<h3 id="ph-${id}">${label}</h3>` + Object.entries(PHYS.e).filter(([, P]) => P.cat === id).map(([, P]) => `<div class="pent"><h4>${esc(P.t)}</h4><p>${esc(P.s)}</p><details><summary>Aprofundar</summary>${paras(P.d)}</details></div>`).join('')).join('');
   } else {
     const ts = E.tileStats(), maxP = Math.max(...E.Q.map(k => ts[k].p));
     const total = st.rolls.reduce((a, b) => a + b, 0);
@@ -546,7 +617,7 @@ function modalRules() {
     <p class="note">As porcentagens somam mais de 100% porque números são compartilhados: um 6 produz Up e Down ao mesmo tempo.</p>
     <h3>Rolagens desta partida (${total})</h3><p class="note">Barras: vezes que cada soma saiu. Traço: o esperado para ${total} rolagens. Em vermelho, os campos.</p><div class="hist">${hist}</div>`;
   }
-  return `<div class="modal wide" role="dialog" aria-label="Regras"><h2>Regras do protótipo</h2><p class="lead">HADRON, criado por Apiano F. Morais, Job S. Furtado Neto e Ivan C. Jardim e desenvolvido pelo LFCA, Laboratório de Física Computacional Aplicada da Universidade Regional do Cariri (URCA).</p><div class="tabs" role="tablist">${tab('regras', 'Regras')}${tab('escolhas', 'Escolhas de design')}${tab('stats', 'Estatística')}</div>${body}<div class="mfoot"><button class="btn pri" type="button" data-a="close">Fechar</button></div></div>`;
+  return `<div class="modal wide" role="dialog" aria-label="Regras"><h2>Regras e física</h2><p class="lead">HADRON, criado por Apiano F. Morais, Job S. Furtado Neto e Ivan C. Jardim e desenvolvido pelo LFCA, Laboratório de Física Computacional Aplicada da Universidade Regional do Cariri (URCA).</p><div class="tabs" role="tablist">${tab('regras', 'Regras')}${tab('fisica', 'A física')}${tab('stats', 'Estatística')}</div>${body}<div class="mfoot"><button class="btn pri" type="button" data-a="close">Fechar</button></div></div>`;
 }
 function modalTrade() {
   const pi = st.current, p = st.players[pi], T = ui.trade;
@@ -567,26 +638,44 @@ function modalOver() {
   <div class="scroll"><table><thead><tr><th>Jogador</th><th class="r">Construções</th><th class="r">Cadeia</th><th class="r">Cartas</th><th class="r">Colab.</th><th class="r">Experimentos</th><th class="r">Total</th></tr></thead><tbody>${rows.map(({ i, b }) => `<tr><td>${pdot(i)} ${esc(st.players[i].name)}</td><td class="r">${b.builds}</td><td class="r">${b.longest}</td><td class="r">${b.cards}</td><td class="r">${b.collab}</td><td class="r">${b.unified + b.higgs + b.susy}</td><td class="r"><b>${b.total}</b></td></tr>`).join('')}</tbody></table></div>
   <div class="mfoot"><button class="btn ghost" type="button" data-a="close">Ver o tabuleiro</button><button class="btn pri" type="button" data-a="new">Nova partida</button></div></div>`;
 }
+function modalPhys() {
+  const P = PHYS.e[ui.physKey], cat = (PHYS.cats.find(c => c[0] === P.cat) || ['', ''])[1];
+  const paras = x => x.split('\n\n').map(q => `<p>${esc(q)}</p>`).join('');
+  const see = (P.see || []).filter(k => PHYS.e[k]);
+  return `<div class="modal phys" role="dialog" aria-label="${esc(P.t)}"><span class="cat">A física · ${cat}</span><h2>${esc(P.t)}</h2><p class="sum">${esc(P.s)}</p>${ui.physDeep ? `<div class="deep">${paras(P.d)}</div>` : '<button class="btn" type="button" data-a="deep">Aprofundar</button>'}${see.length ? `<h3>Veja também</h3><div class="chips">${see.map(k => `<button class="chip" type="button" data-physgo="${k}">${esc(PHYS.e[k].t)}</button>`).join('')}</div>` : ''}<div class="mfoot">${ui.physStack.length ? '<button class="btn ghost" type="button" data-a="physback">Voltar</button>' : ''}<button class="btn" type="button" data-a="physall">Toda a física</button><button class="btn pri" type="button" data-a="close">${ui.physReturn ? 'Voltar à janela anterior' : 'Fechar'}</button></div></div>`;
+}
 function renderModal() {
   const m = $('#modal');
   if (!ui.modal) { m.innerHTML = ''; return; }
-  const html = ui.modal === 'new' ? modalNew() : ui.modal === 'rules' ? modalRules() : ui.modal === 'trade' ? modalTrade() : modalOver();
+  const html = ui.modal === 'new' ? modalNew() : ui.modal === 'rules' ? modalRules() : ui.modal === 'trade' ? modalTrade() : ui.modal === 'phys' ? modalPhys() : modalOver();
   m.innerHTML = `<div class="ov" data-a="ovclose">${html}</div>`;
+  if (ui.modal === 'phys') m.querySelector('.modal').scrollTop = 0;
 }
 function openModal(name) { ui.modal = name; renderModal(); }
+function openPhys(key, chained) {
+  if (!PHYS.e[key]) return;
+  if (ui.modal === 'phys' && chained) ui.physStack.push(ui.physKey);
+  else if (ui.modal !== 'phys') { ui.physStack = []; ui.physReturn = ui.modal && ui.modal !== 'over' ? ui.modal : null; }
+  ui.physKey = key; ui.physDeep = false; ui.modal = 'phys'; renderModal();
+}
+function closeModal() {
+  if (ui.modal === 'phys' && ui.physReturn) { const r = ui.physReturn; ui.physReturn = null; return openModal(r); }
+  ui.modal = null; renderModal();
+}
 
 // ------------------------------------------------------------ ciclo
 function render() {
   if (!st) return;
+  tutCheck();
   if (st.phase === 'over' && !ui.overShown && !st.demo) { ui.overShown = true; ui.modal = 'over'; renderModal(); }
   if (ui.mode && (st.pending || !humanTurn())) ui.mode = null;
   $('#sub').textContent = st.phase === 'setup' ? 'Preparação' : `Rodada ${Math.max(1, Math.ceil(st.turn / st.players.length))}`;
   renderBanner(); renderBoard(); renderPanel(); renderPlayers(); renderLog();
-  scheduleBot();
+  scheduleBot(); tutSchedule();
 }
 function scheduleBot() {
   clearTimeout(botTimer);
-  if (!st || st.phase === 'over' || !st.players[actor()].bot) return;
+  if (!st || st.phase === 'over' || tutActive() || !st.players[actor()].bot) return;
   if (st.demo && st.phase === 'over') return;
   botTimer = setTimeout(() => {
     if (!st || st.phase === 'over' || !st.players[actor()].bot) return;
@@ -601,7 +690,7 @@ function startGame(players) {
   ui.modal = null; renderModal(); save(); render();
 }
 function demoGame(seed = 8128) {
-  const g = E.newGame({ players: DEFAULT_NAMES.slice(0, 3).map((name, i) => ({ name, color: PCOL[i], bot: true })), seed });
+  const g = E.newGame({ players: ['marie', 'lise', 'emmy'].map((id, i) => ({ name: PERSONA(id).name, color: PCOL[i], bot: true, level: PERSONA(id).level, persona: id })), seed });
   g.demo = true;
   let guard = 0;
   while (g.phase !== 'over' && g.turn < 26 && guard++ < 5000) E.apply(g, E.botAction(g));
@@ -609,17 +698,202 @@ function demoGame(seed = 8128) {
   return g;
 }
 
+// ------------------------------------------------------------ tutorial guiado
+const TUT_SEED = 314159;
+const tutActive = () => !!(st && st.tutorial && st.tutorial.active);
+const tutStep = () => tutActive() ? TUT[st.tutorial.step] : null;
+const ownCount = pi => Object.values(st.buildings).filter(b => b.owner === pi).length;
+const roadCount = pi => Object.values(st.roads).filter(r => r.owner === pi).length;
+const kindNames = v => [...new Set(st.board.vertices[v].hexes.map(h => st.board.hexes[h].kind).filter(E.isProd))].map(k => E.QN[k]);
+const listPT = a => a.length <= 1 ? (a[0] || '') : a.slice(0, -1).join(', ') + ' e ' + a[a.length - 1];
+function bestVertex(opts) { let b = opts[0], bs = -1; for (const v of opts) { const sc = E.vertexScore(st, v); if (sc > bs) { bs = sc; b = v; } } return b; }
+function bestEdge(edges) {
+  let b = edges[0], bs = -1;
+  for (const e of edges) {
+    let sc = 0;
+    for (const w of st.board.edges[e].v) if (E.distanceOK(st, w)) sc = Math.max(sc, E.vertexScore(st, w));
+    if (sc > bs) { bs = sc; b = e; }
+  }
+  return b;
+}
+function diceFor(pi) {
+  const nums = new Set();
+  for (const [v, b] of Object.entries(st.buildings)) {
+    if (b.owner !== pi) continue;
+    for (const h of st.board.vertices[+v].hexes) { const H = st.board.hexes[h]; if (E.isProd(H.kind) && st.tokens.higgs !== h) nums.add(H.num); }
+  }
+  let best = 6, bp = -1;
+  for (const n of nums) if (E.prob(n) > bp) { bp = E.prob(n); best = n; }
+  const d1 = Math.min(6, best - 1);
+  return [d1, best - d1];
+}
+function higgsTarget(opts) {
+  let best = null, bs = -1;
+  for (const h of opts) {
+    const H = st.board.hexes[h];
+    if (!E.isProd(H.kind)) continue;
+    let mine = false, sc = 0;
+    for (const v of H.verts) { const b = st.buildings[v]; if (!b) continue; if (b.owner === 0) mine = true; else if (E.qCount(st.players[b.owner]) > 0) sc += 1 + E.prob(H.num); }
+    if (!mine && sc > bs) { bs = sc; best = h; }
+  }
+  if (best === null) best = opts.find(h => !st.board.hexes[h].verts.some(v => st.buildings[v] && st.buildings[v].owner === 0)) ?? opts[0];
+  return best;
+}
+const TT = () => st.tutorial;
+const TUT = [
+  { expect: 'next', text: () => `Bem-vindo ao <b>HADRON</b>! Você dirige um laboratório de física. Os aceleradores do tabuleiro produzem quarks e, com eles, você monta hádrons e núcleos atômicos. Vence quem chegar primeiro a ${E.WIN} pontos de estabilidade.` },
+  { expect: 'next', phys: 'abund', text: () => 'Cada hexágono colorido é um acelerador que produz um tipo de quark, indicado pela letra: <b>u</b>, <b>d</b>, <b>c</b>, <b>s</b>, <b>t</b> ou <b>b</b>. O número na ficha é a soma dos dois dados que ativa a produção; os pontinhos mostram a chance. Up e Down são os mais comuns, como na natureza; Top e Bottom são raríssimos.' },
+  { expect: 'next', phys: 'higgs', text: () => 'Os três hexágonos escuros são <b>Campos Quânticos</b>. Quando os dados somam 2, 7 ou 12, em vez de produzir, um campo é ativado: Decaimento (2), Higgs (7) e Fusão (12). As fichas W±, H⁰ e g mostram onde cada campo está.' },
+  { expect: 'pick', phys: 'proton', enter: () => { TT().target = bestVertex(st.pending.options); },
+    text: () => `Posicione seu <b>Próton</b> no ponto destacado, sem custo. Ele toca hexágonos de ${listPT(kindNames(TT().target))}. As peças ficam nas intersecções e recebem o quark de cada hexágono em volta. Dois hádrons nunca ficam em intersecções vizinhas.`,
+    done: () => ownCount(0) >= 1 },
+  { expect: 'pick', phys: 'drift', enter: () => { TT().target = bestEdge(st.pending.options); },
+    text: () => 'Agora ligue um <b>Tubo de Deriva</b> ao seu Próton, no trecho destacado. As conexões levam a novas intersecções onde você poderá construir, e 5 ou mais em sequência valem 2 pontos pela Maior Cadeia de Aceleradores.',
+    done: () => roadCount(0) >= 1 },
+  { expect: 'auto', text: () => 'Marie e Enrico, seus adversários no tutorial, posicionam as peças deles. A ordem vai e volta: quem colocou por último na primeira volta coloca primeiro na segunda.',
+    done: () => !!st.pending && st.pending.who === 0 },
+  { expect: 'pick', phys: 'neutron', enter: () => { TT().target = bestVertex(st.pending.options); },
+    text: () => `Sua vez de novo: posicione seu <b>Nêutron</b> no ponto destacado. Os recursos iniciais vêm dos hexágonos em volta desta segunda peça, e este ponto toca ${listPT(kindNames(TT().target))}.`,
+    done: () => ownCount(0) >= 2 },
+  { expect: 'pick', phys: 'drift', enter: () => { TT().target = bestEdge(st.pending.options); },
+    text: () => 'Ligue o segundo Tubo de Deriva. Com isso a preparação termina e você recebe seus recursos iniciais.',
+    done: () => roadCount(0) >= 2 },
+  { expect: 'roll', cta: 'Rolar dados', enter: () => { TT().dice = diceFor(0); },
+    text: () => 'Hora de rolar os dados! No tutorial, os dados estão combinados para mostrar a produção funcionando.',
+    done: () => st.phase === 'play' && st.rolled && st.current === 0 },
+  { expect: 'next', phys: 'acc_linear', text: () => { const sm = st.dice ? st.dice[0] + st.dice[1] : 0; return `Saiu <b>${sm}</b>. Toda construção vizinha de um hexágono com ${sm} recebe o quark dele: hádrons recebem 1, núcleos recebem 2. Confira seus quarks no painel do jogador.`; } },
+  { expect: 'next', phys: 'q_t', enter: () => { const p = st.players[0]; E.grant(st, 0, { u: Math.max(0, 1 - p.res.u), d: Math.max(0, 2 - p.res.d), t: 1 }); },
+    text: () => 'Para acelerar o tutorial, o laboratório recebeu uma verba: agora você tem o necessário para um Deutério e ganhou 1 quark <b>Top</b>. Top e Bottom são instáveis: se não forem usados no turno, decaem em Charm ou Strange e liberam 1 Energia.' },
+  { expect: 'build', kind: 'deuterium', cta: 'Construir Deutério', phys: 'deuterium',
+    enter: () => { const f = Object.entries(st.buildings).find(([, b]) => b.owner === 0 && b.type === 'proton'); TT().target = f ? +f[0] : null; },
+    skip: () => !Object.values(st.buildings).some(b => b.owner === 0 && b.type === 'proton'),
+    text: () => 'Construa um <b>Deutério</b> sobre o seu Próton: toque no botão e depois no ponto destacado. Núcleos evoluem no mesmo lugar e você paga só o núcleon que falta: 1 Up + 2 Down, ou seja, um nêutron. O Deutério vale 2 pontos e produz 2 quarks.',
+    done: () => !!st.buildings[TT().target] && st.buildings[TT().target].type === 'deuterium' },
+  { expect: 'card', card: 'gravidade', cta: 'Jogar Gravidade', phys: 'force_grav', enter: () => { E.giveCard(st, 0, 'gravidade'); },
+    text: () => 'Agora uma <b>Carta de Interação</b>. Você recebeu a Gravidade: ela atrai 1 quark de cada hexágono vizinho a uma construção sua. Jogue a carta e escolha o seu Deutério. Só dá para jogar uma carta por turno.',
+    done: () => st.flags.cardPlayed && !st.pending },
+  { expect: 'end', cta: 'Encerrar turno', phys: 'q_t',
+    text: () => 'Encerre o turno. Repare no registro: o Top que você não usou vai decair em Charm + 1 Energia, como os quarks pesados de verdade, que vivem frações de segundo.',
+    done: () => st.current !== 0 },
+  { expect: 'auto', text: () => 'Marie e Enrico jogam os turnos deles.', done: () => st.current === 0 && !st.rolled && !st.pending },
+  { expect: 'roll', cta: 'Rolar dados', phys: 'higgs', enter: () => { TT().dice = [3, 4]; },
+    text: () => 'Role de novo. Desta vez o tutorial combinou um <b>7</b> para mostrar o Campo de Higgs.',
+    done: () => st.rolled },
+  { expect: 'pick', phys: 'higgs', enter: () => { TT().target = higgsTarget(st.pending.options); },
+    skip: () => !(st.pending && st.pending.kind === 'higgsHex'),
+    text: () => '<b>Campo de Higgs!</b> Mova a ficha H⁰ para o hexágono destacado. Enquanto ela estiver lá, ele não produz, e você rouba 1 quark aleatório de quem tem construção nele. Na natureza, o campo de Higgs dá massa às partículas; aqui ele "pesa" sobre um acelerador.',
+    done: () => !st.pending || st.pending.kind !== 'higgsHex' },
+  { expect: 'pick', any: true, skip: () => !(st.pending && st.pending.kind === 'higgsSteal'),
+    text: () => 'Mais de um adversário tem construção nesse hexágono: escolha de quem roubar.', done: () => !st.pending },
+  { expect: 'build', kind: 'drift', cta: 'Construir Tubo de Deriva', phys: 'chain',
+    enter: () => { const p = st.players[0]; E.grant(st, 0, { c: Math.max(0, 1 - p.res.c), s: Math.max(0, 1 - p.res.s) }); const sp = E.buildSpots(st, 0, 'drift'); TT().target = sp.length ? bestEdge(sp) : null; TT().roads = roadCount(0); },
+    skip: () => !E.buildSpots(st, 0, 'drift').length,
+    text: () => 'Construa mais um Tubo de Deriva no trecho destacado; ele custa 1 Charm + 1 Strange. As conexões levam a intersecções livres, onde você pode construir novos hádrons: Próton, Nêutron, Lambda, Píon ou Káon.',
+    done: () => roadCount(0) > TT().roads },
+  { expect: 'next', phys: 'force_weak', text: () => 'O que falta saber: o Campo de <b>Decaimento</b> (2) rebaixa um núcleo de um adversário, e o de <b>Fusão</b> (12) obriga dois adversários a fundir quarks. Você pode trocar 4 quarks iguais por 1 com o banco, 3 Energias por 1 quark, ou negociar com outros jogadores. Três mésons, os quatro núcleos ou as quatro forças valem pontos extras.' },
+  { expect: 'done', text: () => 'Pronto, você aprendeu o essencial! Continue esta partida contra Marie e Enrico, no nível fácil, ou comece uma nova. Para ler a física por trás de qualquer peça, toque nela no tabuleiro ou nos botões <b>física</b>.' },
+];
+function tutCheck() {
+  let guard = 0;
+  while (tutActive() && guard++ < 40) {
+    const T = TT(), s = TUT[T.step];
+    if (!s) { T.active = false; break; }
+    if (!T.entered) {
+      if (s.skip && s.skip()) { T.step++; continue; }
+      if (s.enter) s.enter();
+      T.entered = true;
+    }
+    if (s.done && s.done()) { T.step++; T.entered = false; continue; }
+    break;
+  }
+}
+function tutAllows(a) {
+  const s = tutStep();
+  if (!s) return true;
+  const T = TT();
+  switch (s.expect) {
+    case 'pick': return a.type === 'pick' && (s.any || same(a.value, T.target));
+    case 'roll': return a.type === 'roll';
+    case 'build': return a.type === 'build' && a.kind === s.kind && a.at === T.target;
+    case 'card': return (a.type === 'card' && a.id === s.card) || (a.type === 'pick' && !!st.pending && st.pending.kind === 'gravity');
+    case 'end': return a.type === 'end';
+    default: return false;
+  }
+}
+let tutTimer = 0;
+function tutSchedule() {
+  clearTimeout(tutTimer);
+  const s = tutStep();
+  if (!s || s.expect !== 'auto') return;
+  tutTimer = setTimeout(() => {
+    if (tutStep() !== s) return;
+    try {
+      if (st.pending && st.pending.who !== 0) E.apply(st, E.botAction(st));
+      else if (!st.pending && st.current !== 0) E.apply(st, st.rolled ? { type: 'end' } : { type: 'roll', dice: diceFor(st.current) });
+    } catch (e) { toast(e.message); }
+    render();
+  }, 600);
+}
+function renderCoach(dice) {
+  const s = tutStep(), T = TT(), pd = st.pending;
+  let btns = '';
+  if (s.expect === 'next') btns += '<button class="btn pri" type="button" data-tut="next">Próximo</button>';
+  if (s.cta && !(s.expect === 'build' && ui.mode) && !(s.expect === 'card' && pd)) btns += `<button class="btn pri" type="button" data-tut="cta">${s.cta}</button>`;
+  if (pd && pd.who === 0 && pd.pick === 'player' && s.expect === 'pick') btns += pd.options.map(i => `<button class="btn" type="button" data-pick="${i}">${pdot(i)} ${esc(st.players[i].name)}</button>`).join('');
+  if (s.expect === 'done') btns += '<button class="btn pri" type="button" data-tut="continue">Continuar jogando</button><button class="btn" type="button" data-a="new">Nova partida</button>';
+  if (s.phys) btns += `<button class="btn" type="button" data-phys="${s.phys}">A física</button>`;
+  if (s.expect !== 'done') btns += '<button class="btn ghost" type="button" data-tut="exit">Sair do tutorial</button>';
+  const boardPickNow = (s.expect === 'pick' && pd && pd.who === 0 && pd.pick !== 'player') || (s.expect === 'build' && ui.mode) || (s.expect === 'card' && pd && pd.who === 0);
+  const hint = boardPickNow ? ' <em>Toque no ponto destacado do tabuleiro.</em>' : s.expect === 'auto' ? ' <em>Aguarde a jogada dos adversários…</em>' : '';
+  const b = $('#banner');
+  b.className = 'banner coach';
+  b.innerHTML = `${dice}<div class="msg"><span class="stepno">Tutorial · passo ${T.step + 1} de ${TUT.length}</span><br>${s.text()}${hint}</div><div class="opts">${btns}</div>`;
+}
+function tutButton(kind) {
+  if (!tutActive()) return;
+  const s = tutStep(), T = TT();
+  if (kind === 'next' && s.expect === 'next') { T.step++; T.entered = false; return render(); }
+  if (kind === 'exit' || kind === 'continue') { T.active = false; ui.mode = null; save(); toast(kind === 'exit' ? 'Tutorial encerrado. A partida continua normalmente.' : 'Boa partida!'); return render(); }
+  if (kind === 'cta') {
+    if (s.expect === 'roll') return act({ type: 'roll' });
+    if (s.expect === 'end') return act({ type: 'end' });
+    if (s.expect === 'card') return act({ type: 'card', id: s.card });
+    if (s.expect === 'build') { ui.mode = { kind: 'place', build: s.kind, spots: [T.target] }; render(); $('#board').scrollIntoView({ block: matchMedia('(max-width:980px)').matches ? 'start' : 'nearest', behavior: 'smooth' }); }
+  }
+}
+function startTutorial() {
+  const name = (ui.setup && ui.setup.players[0] && (ui.setup.players[0].name || '').trim()) || 'Você';
+  st = E.newGame({ seed: TUT_SEED, players: [
+    { name, color: PCOL[0] },
+    { name: 'Marie', color: PCOL[1], bot: true, level: 1, persona: 'marie' },
+    { name: 'Enrico', color: PCOL[2], bot: true, level: 1, persona: 'enrico' },
+  ] });
+  E.stripCard(st, 1, 'estab'); E.stripCard(st, 2, 'estab');
+  st.tutorial = { active: true, step: 0, entered: false, target: null, dice: null, roads: 0 };
+  ui.mode = null; ui.overShown = false; ui.bankGive = ui.bankGet = null; ui.lastDice = '';
+  ui.modal = null; renderModal(); render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 // ------------------------------------------------------------ eventos
 function onClick(ev) {
-  const t = ev.target.closest('[data-a],[data-pick],[data-build],[data-bg],[data-bt],[data-en],[data-li],[data-card],[data-pn],[data-ptype],[data-tab],[data-tr],[data-tto],[data-v],[data-e],[data-h]');
+  const t = ev.target.closest('[data-a],[data-pick],[data-build],[data-bg],[data-bt],[data-en],[data-li],[data-card],[data-pn],[data-ptype],[data-tab],[data-tr],[data-tto],[data-v],[data-e],[data-h],[data-phys],[data-physgo],[data-jump],[data-tut]');
   if (!t) return;
   const d = t.dataset;
   if (d.a === 'ovclose' && ev.target !== t) return;
   if (d.v !== undefined || d.e !== undefined || d.h !== undefined) return boardPick(d);
+  if (d.tut) return tutButton(d.tut);
+  if (d.physgo) return openPhys(d.physgo, true);
+  if (d.jump) { const el = document.getElementById('ph-' + d.jump); if (el) el.scrollIntoView({ block: 'start', behavior: 'smooth' }); return; }
+  if (d.phys) {
+    if (t.closest('#board')) { const hl = highlights(); if (ui.mode || hl.v.size || hl.e.size || hl.h.size) return; }
+    return openPhys(d.phys, false);
+  }
   if (d.pick !== undefined) return act({ type: 'pick', value: JSON.parse(d.pick) });
   if (d.build) {
     const pi = st.current, p = st.players[pi];
-    const spots = E.buildSpots(st, pi, d.build).filter(at => E.payPlan(p, E.costOf(st, pi, d.build, at)).ok);
+    const ts = tutStep();
+    const spots = ts && ts.expect === 'build' ? [st.tutorial.target] : E.buildSpots(st, pi, d.build).filter(at => E.payPlan(p, E.costOf(st, pi, d.build, at)).ok);
     ui.mode = { kind: 'place', build: d.build, spots };
     render();
     $('#board').scrollIntoView({ block: matchMedia('(max-width:980px)').matches ? 'start' : 'nearest', behavior: 'smooth' });
@@ -631,7 +905,16 @@ function onClick(ev) {
   if (d.li) return act({ type: 'li', get: d.li });
   if (d.card) return act({ type: 'card', id: d.card });
   if (d.pn) { ui.setup.n = +d.pn; return renderModal(); }
-  if (d.ptype) { readNames(); const [i, k] = d.ptype.split(':'); ui.setup.players[+i].bot = k === 'b'; return renderModal(); }
+  if (d.ptype) {
+    readNames();
+    const [i, k] = d.ptype.split(':'), s = ui.setup, P = s.players[+i];
+    P.bot = k === 'b';
+    if (P.bot) {
+      const taken = new Set(s.players.slice(0, s.n).filter((q, j) => j !== +i && q.bot).map(q => q.persona));
+      if (!P.persona || taken.has(P.persona)) P.persona = (PERSONAS.find(x => !taken.has(x.id)) || PERSONAS[0]).id;
+    }
+    return renderModal();
+  }
   if (d.tab) { ui.rulesTab = d.tab; return renderModal(); }
   if (d.tto) { ui.trade.to = +d.tto; ui.trade.get = {}; return renderModal(); }
   if (d.tr) {
@@ -649,16 +932,23 @@ function onClick(ev) {
     case 'trade': ui.trade = { to: null, give: {}, get: {} }; return openModal('trade');
     case 'sendtrade': { const T = ui.trade; ui.modal = null; renderModal(); return act({ type: 'offer', to: T.to, give: T.give, get: T.get }); }
     case 'new': ui.setup = ui.setup || setupDefaults(); return openModal('new');
+    case 'tutorial': readNames(); return startTutorial();
+    case 'deep': ui.physDeep = true; return renderModal();
+    case 'physback': ui.physKey = ui.physStack.pop(); ui.physDeep = false; return renderModal();
+    case 'physall': ui.physReturn = null; ui.rulesTab = 'fisica'; return openModal('rules');
     case 'over': return openModal('over');
     case 'continue': { const g = loadSaved(); if (g) { st = g; ui.overShown = !!g.winner; ui.modal = null; renderModal(); render(); } return; }
     case 'start': {
       readNames();
       const s = ui.setup;
-      const players = s.players.slice(0, s.n).map((p, i) => ({ name: (p.name || '').trim() || DEFAULT_NAMES[i], color: PCOL[i], bot: p.bot }));
+      const players = s.players.slice(0, s.n).map((p, i) => {
+        const per = p.bot ? PERSONA(p.persona) || PERSONAS[3] : null;
+        return per ? { name: per.name, color: PCOL[i], bot: true, level: per.level, persona: per.id } : { name: (p.name || '').trim() || DEFAULT_NAMES[i], color: PCOL[i], bot: false };
+      });
       if (players.every(p => p.bot)) toast('Todos são computador: a partida vai rodar sozinha.');
       return startGame(players);
     }
-    case 'close': case 'ovclose': ui.modal = null; return renderModal();
+    case 'close': case 'ovclose': return closeModal();
   }
 }
 function readNames() {
@@ -677,9 +967,11 @@ function boardPick(d) {
 document.addEventListener('click', onClick);
 document.addEventListener('keydown', ev => {
   if (ev.key !== 'Escape') return;
-  if (ui.modal) { ui.modal = null; renderModal(); } else if (ui.mode) { ui.mode = null; render(); }
+  if (ui.modal) closeModal(); else if (ui.mode) { ui.mode = null; render(); }
 });
 document.addEventListener('input', ev => { if (ev.target.id && /^p\dname$/.test(ev.target.id)) readNames(); });
+document.addEventListener('change', ev => { const seat = ev.target.dataset && ev.target.dataset.seat; if (seat !== undefined && ui.setup) { ui.setup.players[+seat].persona = ev.target.value; renderModal(); } });
+$('#bTut').addEventListener('click', () => startTutorial());
 $('#bRules').addEventListener('click', () => openModal('rules'));
 $('#bNew').addEventListener('click', () => { ui.setup = ui.setup || setupDefaults(); openModal('new'); });
 

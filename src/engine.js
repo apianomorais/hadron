@@ -299,7 +299,7 @@ function newGame(opts) {
     phase: 'setup', setupStep: 0, setupOrder: [], flags: {}, longest: null, chains: [], rolls: Array(13).fill(0),
   };
   st.board = makeBoard(st);
-  st.players = opts.players.map(p => ({ name: p.name, color: p.color, bot: !!p.bot, res: { u: 0, d: 0, c: 0, s: 0, t: 0, b: 0, e: 0 }, cards: [], points: [], collab: 0, unified: false, blind: false }));
+  st.players = opts.players.map(p => ({ name: p.name, color: p.color, bot: !!p.bot, level: p.level || 2, persona: p.persona || null, res: { u: 0, d: 0, c: 0, s: 0, t: 0, b: 0, e: 0 }, cards: [], points: [], collab: 0, unified: false, blind: false }));
   for (const k of FIELDS) st.tokens[k] = st.board.hexes.find(h => h.kind === k).id;
   for (const [id, c] of Object.entries(CARDS)) for (let i = 0; i < c.n; i++) st.deck.push(id);
   shuffle(st, st.deck);
@@ -704,12 +704,37 @@ function legal(st) {
 }
 
 // ---------------------------------------------------------------- computador
+// Três níveis: 1 = fácil (joga quase ao acaso), 2 = médio (guloso), 3 = difícil (planeja trocas e cartas).
 const KIND_W = { u: 1.25, d: 1.2, c: 0.8, s: 0.9, t: 0.45, b: 0.45 };
 function vertexScore(st, v) {
   return st.board.vertices[v].hexes.reduce((s, h) => { const H = st.board.hexes[h]; return s + (isProd(H.kind) ? prob(H.num) * KIND_W[H.kind] : 0); }, 0);
 }
+const levelOf = (st, i) => st.players[i].level || 2;
 function leader(st, list) { let best = list[0], bv = -1; for (const i of list) { const v = vp(st, i); if (v > bv) { bv = v; best = i; } } return best; }
-function botPick(st, pd) {
+function trailer(st, list) { let best = list[0], bv = Infinity; for (const i of list) { const v = vp(st, i); if (v < bv) { bv = v; best = i; } } return best; }
+const ownerVP = (st, v) => vp(st, st.buildings[v].owner);
+function higgsHexScore(st, pi, h, leaderWeight) {
+  const H = st.board.hexes[h]; let s = isProd(H.kind) ? 0 : -5;
+  for (const v of H.verts) {
+    const b = st.buildings[v]; if (!b) continue;
+    const w = BUILD[b.type].tier === 2 ? 2 : 1;
+    s += (b.owner === pi ? -3 : 1 + vp(st, b.owner) * leaderWeight) * w;
+  }
+  return s * (prob(H.num) + 0.02);
+}
+function bestRoad(st, pi, spots) {
+  let best = spots[0], bs = -1;
+  for (const e of spots) {
+    let s = rnd(st) * 0.05;
+    for (const v of st.board.edges[e].v) if (distanceOK(st, v)) s += vertexScore(st, v);
+    if (s > bs) { bs = s; best = e; }
+  }
+  return best;
+}
+const DISCARD_ORDER = ['colaboracao', 'gauge', 'em', 'blindagem', 'fissao', 'aniquilacao', 'fusao', 'descoberta', 'unificada', 'estab', 'forte', 'fraca', 'gravidade'];
+
+// ---- nível médio (o jogador original do protótipo)
+function pickMedium(st, pd) {
   const pi = pd.who, opts = pd.options, p = st.players[pi];
   const anyOf = () => opts[ri(st, opts.length)];
   switch (pd.kind) {
@@ -721,46 +746,23 @@ function botPick(st, pd) {
     case 'higgsHex': case 'tokenHex': {
       if (pd.kind === 'tokenHex' && pd.data.token !== 'higgs') return anyOf();
       let best = opts[0], bs = -Infinity;
-      for (const h of opts) {
-        const H = st.board.hexes[h]; let s = isProd(H.kind) ? 0 : -5;
-        for (const v of H.verts) { const b = st.buildings[v]; if (!b) continue; s += (b.owner === pi ? -3 : 1 + vp(st, b.owner) * 0.1) * (BUILD[b.type].tier === 2 ? 2 : 1); }
-        s = s * (prob(H.num) + 0.02) + rnd(st) * 0.01;
-        if (s > bs) { bs = s; best = h; }
-      }
+      for (const h of opts) { const s = higgsHexScore(st, pi, h, 0.1) + rnd(st) * 0.01; if (s > bs) { bs = s; best = h; } }
       return best;
     }
     case 'higgsSteal': case 'fusionPick1': case 'fusionPick2': case 'colab': return leader(st, opts);
-    case 'decayPick': case 'fissao': return opts.reduce((a, v) => vp(st, st.buildings[v].owner) > vp(st, st.buildings[a].owner) ? v : a, opts[0]);
-    case 'aniqTarget': {
-      const vs = opts.filter(o => o.k === 'v');
-      const pool = vs.length ? vs : opts;
-      return pool[ri(st, pool.length)];
-    }
+    case 'decayPick': case 'fissao': return opts.reduce((a, v) => ownerVP(st, v) > ownerVP(st, a) ? v : a, opts[0]);
+    case 'aniqTarget': { const vs = opts.filter(o => o.k === 'v'); const pool = vs.length ? vs : opts; return pool[ri(st, pool.length)]; }
     case 'react': return true;
     case 'tradeResponse': return opts.includes(true) && rnd(st) < 0.5;
     case 'fraca': case 'aniqRes': return opts.reduce((a, k) => (p.res[k] > p.res[a] ? k : a), opts[0]);
     case 'tokenPick': return 'higgs';
     case 'gravity': return opts.reduce((a, v) => gravityHexes(st, v).length > gravityHexes(st, a).length ? v : a, opts[0]);
     case 'gauge': return opts.reduce((a, v) => BUILD[st.buildings[v].type].tier > BUILD[st.buildings[a].type].tier ? v : a, opts[0]);
-    case 'discard': {
-      const order = ['colaboracao', 'gauge', 'em', 'blindagem', 'fissao', 'aniquilacao', 'fusao', 'descoberta', 'unificada', 'estab', 'forte', 'fraca', 'gravidade'];
-      return order.find(c => opts.includes(c)) || anyOf();
-    }
+    case 'discard': return DISCARD_ORDER.find(c => opts.includes(c)) || anyOf();
     default: return anyOf();
   }
 }
-function bestRoad(st, pi, spots) {
-  let best = spots[0], bs = -1;
-  for (const e of spots) {
-    let s = rnd(st) * 0.05;
-    for (const v of st.board.edges[e].v) if (distanceOK(st, v)) s += vertexScore(st, v);
-    if (s > bs) { bs = s; best = e; }
-  }
-  return best;
-}
-function botAction(st) {
-  if (st.pending) return { type: 'pick', value: botPick(st, st.pending) };
-  if (!st.rolled) return { type: 'roll' };
+function mainMedium(st) {
   const pi = st.current, p = st.players[pi];
   if (canUnify(st, pi)) return { type: 'unify' };
   const t1Free = buildSpots(st, pi, 'proton').length;
@@ -797,6 +799,249 @@ function botAction(st) {
   return { type: 'end' };
 }
 
+// ---- nível fácil: aceita quase tudo, constrói o que der, encerra cedo
+function pickEasy(st, pd) {
+  const opts = pd.options, anyOf = () => opts[ri(st, opts.length)];
+  switch (pd.kind) {
+    case 'setupHadron': { const top = [...opts].sort((a, b) => vertexScore(st, b) - vertexScore(st, a)).slice(0, 6); return top[ri(st, top.length)]; }
+    case 'react': return rnd(st) < 0.5;
+    case 'tradeResponse': return opts.includes(true) && rnd(st) < 0.65;
+    case 'tokenPick': return anyOf();
+    default: return anyOf();
+  }
+}
+function mainEasy(st) {
+  const pi = st.current, p = st.players[pi];
+  if (canUnify(st, pi)) return { type: 'unify' };
+  if (rnd(st) < 0.25) return { type: 'end' };
+  const kinds = Object.keys(BUILD).filter(k => buildSpots(st, pi, k).some(at => payPlan(p, costOf(st, pi, k, at)).ok));
+  if (kinds.length && rnd(st) < 0.8) {
+    const kind = kinds[ri(st, kinds.length)];
+    const spots = buildSpots(st, pi, kind).filter(at => payPlan(p, costOf(st, pi, kind, at)).ok);
+    return { type: 'build', kind, at: spots[ri(st, spots.length)] };
+  }
+  if (!st.flags.cardPlayed && rnd(st) < 0.3) {
+    const playable = [...new Set(p.cards)].filter(id => cardPlayable(st, pi, id));
+    if (playable.length) return { type: 'card', id: playable[ri(st, playable.length)] };
+  }
+  if (st.flags.botTrades < 1) {
+    const r = bankRatio(st, pi), give = Q.find(k => p.res[k] >= r + 2);
+    if (give) { const gets = LIGHT.filter(k => k !== give); st.flags.botTrades++; return { type: 'bank', give, get: gets[ri(st, gets.length)] }; }
+  }
+  return { type: 'end' };
+}
+
+// ---- nível difícil: avalia valor por custo, faz trocas que fecham construções, usa cartas com propósito
+const costWeight = c => Object.entries(c).reduce((s, [k, n]) => s + n * (k === 'e' ? 1.6 : 1), 0) || 1;
+function prodWeighted(st, v) { return vertexScore(st, v) * 8; }
+function roadCtx(st, pi) {
+  return {
+    before: chainLen(st, pi),
+    best: Math.max(0, ...st.players.map((_, i) => i === pi ? 0 : chainLen(st, i))),
+    holder: st.longest ? st.longest.owner : null,
+    noSpot: !buildSpots(st, pi, 'proton').length,
+  };
+}
+function roadValue(st, pi, e, kind, ctx) {
+  let val = 0;
+  const E = st.board.edges[e];
+  for (const v of E.v) if (!touchesOwn(st, pi, v, e) && distanceOK(st, v)) val = Math.max(val, 0.5 + vertexScore(st, v) * 5);
+  if (ctx.noSpot) val += 0.4;
+  st.roads[e] = { owner: pi, type: kind };
+  const after = chainLen(st, pi);
+  delete st.roads[e];
+  if (ctx.holder !== pi && after >= LONG_MIN && after > ctx.best && ctx.before <= ctx.best) val += 2;
+  if (kind === 'magnet') val += 0.4;
+  if (kind === 'detector') val += 0.6;
+  return val;
+}
+function hardCandidates(st, pi) {
+  const out = [];
+  const mesons = Object.values(st.buildings).filter(b => b.owner === pi && BUILD[b.type].meson).length;
+  const mine = Object.values(st.buildings).filter(b => b.owner === pi);
+  let ctx = null;
+  for (const kind of Object.keys(BUILD)) {
+    const B = BUILD[kind];
+    for (const at of buildSpots(st, pi, kind)) {
+      let val;
+      if (B.tier === 1) {
+        val = 1 + prodWeighted(st, at);
+        if (kind === 'lambda') val += 0.4;
+        if (kind === 'pion') val += bankRatio(st, pi) === 4 ? 0.5 : -0.6;
+        if (kind === 'kaon') val += 0.2;
+        if (B.meson && mesons === 2) val += 2;
+      } else if (B.tier === 2) {
+        if (kind === 'deuterium') val = 1 + prodWeighted(st, at);
+        else if (kind === 'helium') val = 1.2;
+        else if (kind === 'carbon') val = 1.8;
+        else val = NUCLEI.filter(t => t !== 'lithium').every(t => mine.some(b => b.type === t)) ? 3 : 0.1;
+      } else val = roadValue(st, pi, at, kind, ctx || (ctx = roadCtx(st, pi)));
+      const cost = costOf(st, pi, kind, at);
+      out.push({ kind, at, value: val, cost, score: val / costWeight(cost) });
+    }
+  }
+  return out.sort((a, b) => b.score - a.score);
+}
+function needsOf(p, cost) { const m = {}; for (const [k, n] of Object.entries(cost)) if (p.res[k] < n) m[k] = n - p.res[k]; return m; }
+function tradeStep(st, pi, t) {
+  const p = st.players[pi], cost = t.cost, need = needsOf(p, cost);
+  const missQ = Object.entries(need).filter(([k]) => k !== 'e');
+  const missE = need.e || 0;
+  const nq = missQ.reduce((s, [, n]) => s + n, 0);
+  if (!nq && !missE) return null;
+  const r = bankRatio(st, pi);
+  const eSpare = p.res.e - (cost.e || 0);
+  const surplus = k => p.res[k] - (cost[k] || 0);
+  let capacity = Q.reduce((s, k) => s + Math.max(0, Math.floor(surplus(k) / r)), 0) + Math.max(0, Math.floor(eSpare / 3));
+  if (eSpare >= 1 && nq === 1 && !missE) return null; // a Energia já substitui a partícula que falta
+  if (missE || nq > capacity + 1) return null;
+  const [k] = missQ[0];
+  if ((k === 't' || k === 'b') && owns(st, pi, 'lithium') && !st.flags.liUsed && surplus('u') >= 1 && surplus('d') >= 1) return { type: 'li', get: k };
+  const give = [...Q].sort((a, b) => surplus(b) - surplus(a)).find(g => g !== k && surplus(g) >= r);
+  if (give) return { type: 'bank', give, get: k };
+  if (eSpare >= 3) return { type: 'energy', get: k };
+  return null;
+}
+function hardCard(st, pi) {
+  const p = st.players[pi];
+  if (st.flags.cardPlayed) return null;
+  const can = id => cardPlayable(st, pi, id);
+  const opp = others(st, pi), lead = leader(st, opp), leadVP = vp(st, lead);
+  if (can('forte')) {
+    for (const kind of ['proton', 'neutron', 'lambda']) {
+      const spots = buildSpots(st, pi, kind); if (!spots.length) continue;
+      const c = { ...BUILD[kind].cost }; if (payPlan(p, c).ok) continue; c.u--;
+      if (payPlan(p, c).ok) return { type: 'card', id: 'forte' };
+    }
+  }
+  if (can('gravidade') && Math.max(...gravityOptions(st, pi).map(v => gravityHexes(st, v).length)) >= 2) return { type: 'card', id: 'gravidade' };
+  const higgsOnMe = st.board.hexes[st.tokens.higgs].verts.some(v => st.buildings[v] && st.buildings[v].owner === pi);
+  if (can('unificada') && (higgsOnMe || leadVP >= 7)) return { type: 'card', id: 'unificada' };
+  if (can('em') && higgsOnMe) return { type: 'card', id: 'em' };
+  if (can('aniquilacao') && leadVP >= 9) return { type: 'card', id: 'aniquilacao' };
+  if (can('descoberta') && p.res.e >= 2 && p.cards.length <= 5) return { type: 'card', id: 'descoberta' };
+  if (can('fraca') && owns(st, pi, 'helium') && p.res.e < 2 && Q.some(k => p.res[k] >= 3)) return { type: 'card', id: 'fraca' };
+  if (can('blindagem') && qCount(p) >= 8) return { type: 'card', id: 'blindagem' };
+  if (can('fissao') && leadVP >= 8) return { type: 'card', id: 'fissao' };
+  return null;
+}
+function hardValueOf(st, pi, res) {
+  const p = st.players[pi], top = hardCandidates(st, pi).find(c => c.value >= 0.8);
+  const need = top ? needsOf(p, top.cost) : {};
+  return Object.entries(res).reduce((s, [k, n]) => s + n * (need[k] ? 2 : (KIND_W[k] || 1)), 0);
+}
+function pickHard(st, pd) {
+  const pi = pd.who, opts = pd.options, p = st.players[pi];
+  const anyOf = () => opts[ri(st, opts.length)];
+  switch (pd.kind) {
+    case 'setupHadron': {
+      const mine = Object.entries(st.buildings).filter(([, b]) => b.owner === pi).map(([v]) => +v);
+      const have = new Set(mine.flatMap(v => st.board.vertices[v].hexes.map(h => st.board.hexes[h].kind)));
+      let best = opts[0], bs = -1;
+      for (const v of opts) {
+        const kinds = new Set(st.board.vertices[v].hexes.map(h => st.board.hexes[h].kind).filter(isProd));
+        let s = vertexScore(st, v) + kinds.size * 0.01 + [...kinds].filter(k => !have.has(k)).length * 0.03;
+        if (kinds.has('u') && kinds.has('d')) s += 0.03;
+        s += rnd(st) * 0.005;
+        if (s > bs) { bs = s; best = v; }
+      }
+      return best;
+    }
+    case 'setupAccel': return bestRoad(st, pi, opts);
+    case 'higgsHex': case 'tokenHex': {
+      if (pd.kind === 'tokenHex' && pd.data.token !== 'higgs') {
+        const mineHexes = new Set(Object.entries(st.buildings).filter(([, b]) => b.owner === pi).flatMap(([v]) => st.board.vertices[+v].hexes));
+        const far = opts.filter(h => !mineHexes.has(h));
+        return (far.length ? far : opts)[0];
+      }
+      let best = opts[0], bs = -Infinity;
+      for (const h of opts) { const s = higgsHexScore(st, pi, h, 0.35); if (s > bs) { bs = s; best = h; } }
+      return best;
+    }
+    case 'higgsSteal': case 'colab': return leader(st, opts);
+    case 'fusionPick1': case 'fusionPick2': return trailer(st, opts); // a Fusão dá pontos: escolha quem está atrás
+    case 'decayPick': case 'fissao': return opts.reduce((a, v) => (ownerVP(st, v) * 10 + BUILD[st.buildings[v].type].vp) > (ownerVP(st, a) * 10 + BUILD[st.buildings[a].type].vp) ? v : a, opts[0]);
+    case 'aniqTarget': {
+      const lead = leader(st, others(st, pi));
+      const pool = opts.filter(o => o.k === 'v' && st.buildings[o.id].owner === lead);
+      return (pool.length ? pool : opts.filter(o => o.k === 'v').concat(opts))[0];
+    }
+    case 'react': return true;
+    case 'tradeResponse': {
+      if (!opts.includes(true)) return false;
+      const d = pd.data;
+      if (vp(st, d.from) >= WIN - 3) return false;
+      return hardValueOf(st, pi, d.give) > hardValueOf(st, pi, d.get) + 0.2;
+    }
+    case 'fraca': case 'aniqRes': {
+      const top = hardCandidates(st, pi).find(c => c.value >= 0.8);
+      const keep = top ? top.cost : {};
+      return opts.reduce((a, k) => (p.res[k] - (keep[k] || 0) > p.res[a] - (keep[a] || 0) ? k : a), opts[0]);
+    }
+    case 'tokenPick': return 'higgs';
+    case 'gravity': return opts.reduce((a, v) => gravityHexes(st, v).length > gravityHexes(st, a).length ? v : a, opts[0]);
+    case 'gauge': return opts.reduce((a, v) => BUILD[st.buildings[v].type].vp > BUILD[st.buildings[a].type].vp ? v : a, opts[0]);
+    case 'discard': return DISCARD_ORDER.find(c => opts.includes(c)) || anyOf();
+    default: return pickMedium(st, pd);
+  }
+}
+function mainHard(st) {
+  const pi = st.current, p = st.players[pi];
+  if (canUnify(st, pi)) return { type: 'unify' };
+  const card = hardCard(st, pi); if (card) return card;
+  const cands = hardCandidates(st, pi);
+  const afford = cands.filter(c => c.value >= 0.45 && payPlan(p, c.cost).ok);
+  if (afford.length) return { type: 'build', kind: afford[0].kind, at: afford[0].at };
+  if (st.flags.botTrades < 4) {
+    for (const t of cands.filter(c => c.value >= 0.8).slice(0, 4)) {
+      const step = tradeStep(st, pi, t);
+      if (step) { st.flags.botTrades++; return step; }
+    }
+  }
+  if (st.flags.offers < 1) {
+    const t = cands.find(c => c.value >= 0.8);
+    if (t) {
+      const need = needsOf(p, t.cost), miss = Object.entries(need).filter(([k]) => k !== 'e');
+      if (miss.length === 1 && miss[0][1] === 1 && !need.e) {
+        const k = miss[0][0];
+        const give = [...Q].sort((a, b) => (p.res[b] - (t.cost[b] || 0)) - (p.res[a] - (t.cost[a] || 0))).find(g => g !== k && p.res[g] - (t.cost[g] || 0) >= 1);
+        const opp = others(st, pi).filter(i => st.players[i].res[k] > 0 && vp(st, i) < WIN - 3);
+        if (give && opp.length) {
+          const to = opp.reduce((a, i) => st.players[i].res[k] > st.players[a].res[k] ? i : a, opp[0]);
+          return { type: 'offer', to, give: { [give]: 1 }, get: { [k]: 1 } };
+        }
+      }
+    }
+  }
+  return { type: 'end' };
+}
+
+function botAction(st) {
+  const who = st.pending ? st.pending.who : st.current, lvl = levelOf(st, who);
+  if (st.pending) return { type: 'pick', value: lvl === 1 ? pickEasy(st, st.pending) : lvl === 3 ? pickHard(st, st.pending) : pickMedium(st, st.pending) };
+  if (!st.rolled) return { type: 'roll' };
+  return lvl === 1 ? mainEasy(st) : lvl === 3 ? mainHard(st) : mainMedium(st);
+}
+
+// ---------------------------------------------------------------- tutorial
+function grant(st, pi, res) { addRes(st.players[pi], res); }
+function giveCard(st, pi, id) { // move a carta pedida para a mão do jogador, mantendo o baralho íntegro
+  const p = st.players[pi];
+  if (p.cards.includes(id)) return true;
+  for (const pile of [st.deck, st.discard]) { const i = pile.indexOf(id); if (i >= 0) { pile.splice(i, 1); p.cards.push(id); return true; } }
+  for (const q of st.players) { if (q === p) continue; const i = q.cards.indexOf(id); if (i >= 0) { q.cards.splice(i, 1); p.cards.push(id); return true; } }
+  return false;
+}
+function stripCard(st, pi, id) { // devolve a carta ao baralho e dá outra comum no lugar
+  const p = st.players[pi];
+  let i;
+  while ((i = p.cards.indexOf(id)) >= 0) {
+    p.cards.splice(i, 1); st.deck.unshift(id);
+    const j = st.deck.findIndex(c => c !== id && CARDS[c].group !== 'point' && c !== 'estab');
+    if (j >= 0) p.cards.push(st.deck.splice(j, 1)[0]);
+  }
+}
+
 function tileStats() {
   const out = {};
   for (const k of Q) {
@@ -810,6 +1055,7 @@ return {
   Q, QN, WIN, HAND, LIMIT, LONG_MIN, FIELDS, FIELD_NAME, TOKEN_SYM, TILE_SET, TILE_NAME, BUILD, CARDS, NUCLEI, UNI, DECK_SIZE,
   isProd, prob, newGame, apply, legal, botAction, vp, vpBreak, chainLen, buildSpots, costOf, payPlan, bankRatio,
   cardPlayable, whyNotCard, canUnify, owns, countTier, qCount, fmtRes, tileStats, stealImmune,
+  grant, giveCard, stripCard, vertexScore, bestRoad, distanceOK,
 };
 })();
 if (typeof module !== 'undefined') module.exports = HadronEngine;

@@ -14,6 +14,7 @@ Desenvolvido pelo **LFCA**, Laboratório de Física Computacional Aplicada da Un
 
 ## Como jogar
 
+- Primeira vez? O botão **Tutorial** abre uma partida guiada em 21 passos, com dados combinados e explicação de cada movimento.
 - De 3 a 4 jogadores no mesmo aparelho. O computador pode ocupar qualquer lugar.
 - Na sua vez, role 2d6. Os hexágonos com o número sorteado produzem o seu quark para as construções vizinhas: cada hádron recebe 1 e cada núcleo recebe 2.
 - As somas 2, 7 e 12 ativam os Campos Quânticos (Decaimento, Higgs e Fusão) em vez de produzir.
@@ -21,7 +22,23 @@ Desenvolvido pelo **LFCA**, Laboratório de Física Computacional Aplicada da Un
 - No fim de cada turno, todo Top vira Charm + 1 Energia e todo Bottom vira Strange + 1 Energia.
 - Vence quem chegar a 12 pontos de estabilidade no próprio turno.
 
-As regras completas, as escolhas de design e a estatística da partida ficam no botão **Regras** dentro do jogo.
+As regras completas, a física por trás de cada peça e a estatística da partida ficam no botão **Regras** dentro do jogo.
+
+## Adversários do computador
+
+Os lugares do computador são ocupados por cientistas que marcaram a física, cada um com um nível de dificuldade.
+
+| Nível | Personagens |
+|---|---|
+| Fácil | Marie (Marie Curie), Enrico (Enrico Fermi), Elisa (Elisa Frota-Pessôa) |
+| Médio | Lise (Lise Meitner), Mário (Mário Schenberg), Maria (Maria Goeppert Mayer) |
+| Difícil | Chien-Shiung (Chien-Shiung Wu), Murray (Murray Gell-Mann), Emmy (Emmy Noether) |
+
+O nível fácil joga quase ao acaso, o médio constrói de forma gulosa e o difícil avalia o valor de cada construção, faz trocas que completam construções e usa as cartas com propósito.
+
+## A física por trás
+
+São 53 verbetes em duas camadas: um resumo acessível, para o ensino médio, e uma parte "Aprofundar", com massas, cargas, tempos de vida e a história das descobertas. Eles cobrem os quarks, os hádrons, os núcleos, os aceleradores e detectores, os campos e as forças, os fenômenos das cartas, os experimentos e os cientistas do jogo. Para abrir um verbete, toque em qualquer hexágono, peça ou ficha do tabuleiro, nos botões **física** do painel ou na aba **A física** das Regras. Quando o jogo simplifica a natureza (por exemplo, o decaimento do Top em Charm), o texto avisa.
 
 ## Distribuição dos hexágonos
 
@@ -55,7 +72,15 @@ Onde o GDD deixava a regra aberta ou se contradizia, o protótipo decidiu assim:
 
 ## Resultados das simulações
 
-Em 400 partidas entre jogadores do computador, a vitória levou em média 12,5 rodadas. Os pontos do vencedor vieram 80% de construções, 10% da Maior Cadeia, 6% de cartas de ponto e 4% de Núcleos Colaborativos. Os três experimentos especiais (Bóson de Higgs, Supersimetria e Unificação) praticamente não aconteceram, um sinal de que talvez estejam caros demais.
+Em 400 partidas entre jogadores do computador de nível médio, a vitória levou em média 12,5 rodadas. Os pontos do vencedor vieram 80% de construções, 10% da Maior Cadeia, 6% de cartas de ponto e 4% de Núcleos Colaborativos. Os três experimentos especiais (Bóson de Higgs, Supersimetria e Unificação) praticamente não aconteceram, um sinal de que talvez estejam caros demais.
+
+Os níveis do computador foram medidos com `tests/levels.js`, em 300 partidas de 3 jogadores por mesa, alternando os lugares:
+
+| Mesa | Vitórias do nível testado |
+|---|---:|
+| Difícil contra dois médios | 50% (o esperado sem diferença seria 33%) |
+| Fácil contra dois médios | 3% |
+| Difícil contra dois fáceis | 88% |
 
 ## Código
 
@@ -63,11 +88,14 @@ Em 400 partidas entre jogadores do computador, a vitória levou em média 12,5 r
 |---|---|
 | `index.html` | O jogo pronto, gerado pelo `build.py`. Não edite à mão. |
 | `src/engine.js` | Motor de regras: lógica pura, estado em JSON. |
-| `src/ui.html` | Interface: tabuleiro em SVG, painéis e janelas. |
+| `src/ui.html` | Interface: tabuleiro em SVG, painéis, janelas e o tutorial. |
+| `src/physics.js` | Os 53 verbetes de "a física por trás". |
 | `tests/sim.js` | Simula centenas de partidas completas e confere as regras a cada jogada. |
+| `tests/levels.js` | Mede a força dos níveis fácil, médio e difícil. |
 | `assets/` | Símbolo do LFCA/URCA. O `build.py` embute a versão de 256 px no `index.html`. |
 
 ```
 python3 build.py      # regenera index.html a partir de src/
 node tests/sim.js     # roda as simulações
+node tests/levels.js  # compara os níveis do computador
 ```
