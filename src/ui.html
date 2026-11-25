@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HADRON</title>
+<meta name="author" content="Apiano F. Morais, Job S. Furtado Neto e Ivan C. Jardim">
+<meta name="description" content="HADRON: jogo de tabuleiro de física de partículas. Produza quarks, construa hádrons e núcleos atômicos.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE occasion: jogo de tabuleiro de física de partículas, sério e vivo
+   IDEA a placa fotográfica de uma câmara de bolhas (trilhas de partículas em espiral) ao lado do console de um detector
+   PICTURE o tabuleiro hexagonal como corte do detector, peças dos jogadores nas intersecções, campos quânticos como fichas
+   COLOUR fundo negro de câmara de bolhas; as cores dos quarks do GDD nos hexágonos; jogadores em branco, laranja, rosa e lima
+   TYPE Space Grotesk para títulos e números + Inter para texto
+   LAYOUT laptop: faixa de instrução, tabuleiro à esquerda, console do jogador à direita, placar e registro abaixo; celular: instrução fixa, tabuleiro, placar, console, registro */
+:root{color-scheme:dark;--bg:#0a0d10;--plate:#0f1418;--panel:#141a1f;--panel2:#1a2127;--line:#28323a;--ink:#edf1f3;--mute:#9babb4;--u:#7cc4ff;--d:#3d72e6;--c:#3ec27f;--s:#f2c94c;--t:#ef5350;--b:#a979ec;--e:#f0a830;--hot:#ff6b5b;--focus:#9fd8ff}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0;background:var(--bg);color:var(--ink)}
+body{font:15px/1.5 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;overflow-x:clip}
+h1,h2,h3,.num{font-family:"Space Grotesk",Inter,system-ui,sans-serif}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+button:disabled{cursor:not-allowed;opacity:.42}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 400px;grid-template-rows:auto auto auto 1fr auto;grid-template-areas:"top top" "banner banner" "board panel" "side panel" "foot foot";gap:14px 18px;max-width:1440px;margin:0 auto;padding:10px max(16px,2vw) 40px}
+.top{grid-area:top;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.top h1{margin:0;font-size:26px;letter-spacing:-.02em;line-height:1}
+.top h1 small{font:500 14px Inter,sans-serif;color:var(--mute);margin-left:10px;letter-spacing:0}
+.top .sp{flex:1}
+.btn{min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);font-weight:600}
+.btn:hover:not(:disabled){border-color:#4a5862;background:#212a31}
+.btn.pri{background:var(--ink);color:#0a0d10;border-color:var(--ink)}
+.btn.pri:hover:not(:disabled){background:#fff}
+.btn.ghost{background:transparent}
+.btn.sm{min-height:36px;padding:0 12px;font-size:14px;border-radius:8px}
+.banner{grid-area:banner;display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 14px;border-radius:14px;background:var(--panel);border:1px solid var(--line);min-height:68px}
+.banner .who{display:flex;align-items:center;gap:8px;font:700 17px "Space Grotesk",sans-serif}
+.banner .msg{flex:1 1 260px;color:var(--ink)}
+.banner .msg em{font-style:normal;color:var(--mute)}
+.banner .opts{display:flex;gap:8px;flex-wrap:wrap}
+.dot{display:inline-block;vertical-align:-2px;width:14px;height:14px;border-radius:50%;flex:none;border:2px solid #000;box-shadow:0 0 0 1px #ffffff33}
+.dice{display:flex;gap:6px}
+.dice svg{width:40px;height:40px}
+.dice.roll svg{animation:tumble .5s ease-out both}
+.dice.roll svg+svg{animation-delay:.07s}
+@keyframes tumble{0%{transform:rotate(-35deg) scale(.6);opacity:.2}70%{transform:rotate(8deg) scale(1.06)}100%{transform:none}}
+.boardcol{grid-area:board;display:flex;flex-direction:column;gap:10px}
+.boardbox{scroll-margin-top:130px;position:relative;border-radius:18px;background:radial-gradient(120% 90% at 30% 20%,#141b20,#0b0f12 70%);border:1px solid var(--line);overflow:hidden}
+.boardbox svg{display:block;width:100%;height:auto;max-height:calc(100svh - 150px);touch-action:manipulation}
+.hit{cursor:pointer}
+.pulse{animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.45}}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--mute);padding:0 4px}
+.legend b{color:var(--ink);font-weight:600}
+.qd{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--k);color:#0a0d10;font:italic 700 13px "Space Grotesk",sans-serif;vertical-align:-4px;margin-right:3px;flex:none}
+.qd.e{font-style:normal}
+.cost{display:inline-flex;gap:8px;flex-wrap:wrap;align-items:center;white-space:nowrap}
+.panel{grid-area:panel;display:flex;flex-direction:column;gap:12px}
+@media(min-width:981px){.panel{position:sticky;top:10px;align-self:start;max-height:calc(100svh - 20px);overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;padding-right:2px}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+.card h2{margin:0 0 10px;font-size:17px;letter-spacing:-.01em}
+.card h3{margin:14px 0 6px;font-size:14px;color:var(--mute);font-weight:600}
+.me{display:flex;align-items:center;gap:10px}
+.me h2{margin:0;flex:1;font-size:22px}
+.me .vp{font:700 30px/1 "Space Grotesk",sans-serif}
+.me .vp small{font-size:15px;color:var(--mute);font-weight:500}
+.res{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-top:12px}
+.res div{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:6px 2px 4px;text-align:center}
+.res .qd{width:24px;height:24px;font-size:15px;margin:0}
+.res .n{display:block;font:700 19px/1.2 "Space Grotesk",sans-serif}
+.res .lab{display:block;font-size:11px;color:var(--mute);white-space:nowrap}
+.res .unst{border-color:#5a3b3b}
+.note{font-size:13px;color:var(--mute);margin:8px 0 0}
+.brow{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:10px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
+.brow:first-of-type{border-top:0}
+.sym{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font:700 14px "Space Grotesk",sans-serif;background:var(--panel2);border:1px solid var(--line)}
+.sym.t2{border-radius:9px}
+.sym.t3{border-radius:4px;font-size:12px}
+.brow .nm{font-weight:600}
+.brow .nm small{color:var(--mute);font-weight:500}
+.brow .why{display:block;font-size:12px;color:var(--mute)}
+.seg{display:flex;gap:5px;flex-wrap:wrap}
+.seg button{min-height:40px;min-width:44px;padding:0 8px;border-radius:9px;border:1px solid var(--line);background:var(--panel2);display:inline-flex;align-items:center;gap:2px}
+.seg button[aria-pressed=true]{border-color:var(--ink);background:#2a343c}
+.trow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0}
+.trow span.l{font-size:13px;color:var(--mute);width:62px}
+.hand{display:grid;gap:8px}
+.ic{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--panel2)}
+.ic.basic{border-color:#2f4b66}.ic.protect{border-color:#365c45}.ic.reaction{border-color:#614a2b}
+.ic .hd{display:flex;align-items:baseline;gap:8px}
+.ic .hd b{flex:1}
+.ic .g{font-size:12px;color:var(--mute)}
+.ic p{margin:4px 0 8px;font-size:13px;color:#c9d3d8}
+.ic .why{font-size:12px;color:var(--mute)}
+.side{grid-area:side;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:14px;align-items:start}
+.pl{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.pl:first-of-type{border-top:0}
+.pl.cur .pn{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px}
+.pl .pn{font-weight:700}
+.pl .tag{font-size:11px;color:var(--mute);border:1px solid var(--line);border-radius:6px;padding:0 5px;margin-left:6px;font-weight:500}
+.pl .pv{font:700 26px/1 "Space Grotesk",sans-serif;text-align:right}
+.pl .st{grid-column:2/4;font-size:13px;color:var(--mute)}
+.badges{grid-column:2/4;display:flex;gap:5px;flex-wrap:wrap}
+.badge{font-size:12px;border-radius:6px;padding:1px 7px;background:#232c33;color:#dfe7eb}
+.log{max-height:340px;overflow:auto;font-size:13px;margin:0;padding:0;list-style:none}
+.log li{padding:5px 0;border-top:1px solid #1f282e;display:flex;gap:8px}
+.log li .t{color:var(--mute);font-variant-numeric:tabular-nums;width:2.2em;flex:none;text-align:right}
+.log li .dot{width:10px;height:10px;margin-top:4px;border-width:1px}
+.ov{position:fixed;inset:0;background:#05070acc;display:grid;place-items:center;padding:16px;z-index:20;overflow:auto}
+.modal{width:min(640px,100%);max-height:calc(100svh - 32px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px}
+.modal.wide{width:min(900px,100%)}
+.modal h2{margin:0 0 6px;font-size:30px;letter-spacing:-.02em;line-height:1.05}
+.modal h3{font-size:17px;margin:20px 0 8px}
+.modal p{margin:6px 0;color:#d4dde1}
+.modal .lead{color:var(--mute);margin-bottom:14px}
+.prow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;margin:8px 0}
+.prow input{min-height:44px;font-size:16px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:0 12px;width:100%}
+.mfoot{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:18px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px}
+.tabs button{min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:transparent;font-weight:600}
+.tabs button[aria-selected=true]{background:var(--ink);color:#0a0d10}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--mute);font-weight:600}
+td.r,th.r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.bar{height:10px;border-radius:5px;background:var(--k);min-width:2px}
+.hist{display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:6px;margin-top:8px}
+.hist>div{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;color:var(--mute);font-variant-numeric:tabular-nums}
+.hist b{color:var(--ink)}
+.hb{position:relative;height:120px;width:100%;border-bottom:1px solid var(--line)}
+.hb i{position:absolute;left:0;right:0;bottom:0;border-radius:4px 4px 0 0;background:#5d6b74}
+.hb i.f{background:var(--hot)}
+.hb s{position:absolute;left:-3px;right:-3px;border-top:2px dashed #e8eef1cc;height:0}
+ol.interp{padding-left:20px;margin:6px 0}
+ol.interp li{margin:6px 0;color:#d4dde1}
+.step{display:flex;gap:8px;flex-wrap:nowrap;align-items:center;flex:none}
+.step button{width:36px;height:36px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);font-weight:700}
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:8px}
+.tgrid>div{display:flex;align-items:center;gap:6px;justify-content:space-between;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:6px 8px}
+.tgrid>div>span:first-child{white-space:nowrap}
+.foot{grid-area:foot;border-top:1px solid var(--line);padding-top:14px;font-size:13px;color:var(--mute);display:flex;gap:6px 16px;flex-wrap:wrap}
+.foot b{color:var(--ink);font-weight:600}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#ffe3dc;color:#2a0c08;padding:10px 16px;border-radius:10px;font-weight:600;z-index:30;max-width:calc(100% - 32px);box-shadow:0 6px 30px #0008}
+@media(max-width:980px){
+  .app{grid-template-columns:minmax(0,1fr);grid-template-areas:"top" "banner" "board" "panel" "side" "foot"}
+  .banner{position:sticky;top:0;z-index:6;box-shadow:0 8px 24px #000a}
+  .panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));align-items:start}
+  .boardbox svg{max-height:none}
+}
+@media(max-width:640px){
+  .side{grid-template-columns:minmax(0,1fr)}
+  .res{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .banner{padding:8px 10px;gap:8px}
+  .banner .msg{flex-basis:100%;order:3;font-size:14px}
+  .top h1 small,.top .long{display:none}
+  .modal{padding:16px}
+  .modal h2{font-size:24px}
+}
+@media(prefers-reduced-motion:reduce){.dice.roll svg,.pulse{animation:none}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="top">
+    <h1>HADRON <small id="sub">Física de partículas em 2d6</small></h1>
+    <div class="sp"></div>
+    <button class="btn ghost sm" id="bRules" type="button">Regras<span class="long"> e estatística</span></button>
+    <button class="btn sm" id="bNew" type="button">Nova partida</button>
+  </header>
+  <section class="banner" id="banner" aria-live="polite"></section>
+  <section class="boardcol">
+    <div class="boardbox" id="board"></div>
+    <div class="legend" id="legend"></div>
+  </section>
+  <aside class="panel" id="panel"></aside>
+  <section class="side">
+    <div class="card"><h2>Placar</h2><div id="players"></div></div>
+    <div class="card"><h2>Registro</h2><ul class="log" id="log"></ul></div>
+  </section>
+  <footer class="foot"><span><b>HADRON</b>, criado por Apiano F. Morais, Job S. Furtado Neto e Ivan C. Jardim.</span><span>Protótipo eletrônico do jogo de tabuleiro.</span></footer>
+</div>
+<div id="modal"></div>
+<div id="toast" class="toast" hidden></div>
+<script>
+/*ENGINE*/
+</script>
+<script>
+{
+const E = HadronEngine;
+const PCOL = ['#ffffff', '#ff8c3a', '#ff5ca8', '#c8f04a'];
+const QHEX = { u: '#7cc4ff', d: '#3d72e6', c: '#3ec27f', s: '#f2c94c', t: '#ef5350', b: '#a979ec', e: '#f0a830' };
+const QLET = { u: 'u', d: 'd', c: 'c', s: 's', t: 't', b: 'b', e: 'E' };
+const GROUP = { basic: 'Básica', protect: 'Proteção', reaction: 'Reação', point: 'Ponto' };
+const DEFAULT_NAMES = ['Apiano', 'Ivan', 'Job', 'César']; // César Lattes, codescobridor do píon
+const SAVE_KEY = 'hadron.save.v1';
+const S = 50;
+
+let st = null;
+const ui = { mode: null, modal: null, rulesTab: 'regras', bankGive: null, bankGet: null, trade: null, lastDice: '', overShown: false, setup: null, toastT: 0 };
+let botTimer = 0;
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const pct = p => (p * 100).toFixed(1).replace('.', ',') + '%';
+const qd = k => `<i class="qd${k === 'e' ? ' e' : ''}" style="--k:${QHEX[k]}">${QLET[k]}</i>`;
+const costHTML = c => `<span class="cost">${Object.entries(c).filter(([, n]) => n > 0).map(([k, n]) => `<span>${qd(k)}${n}</span>`).join('')}</span>`;
+const pdot = i => `<span class="dot" style="background:${esc(st.players[i].color)}"></span>`;
+const pname = i => `${pdot(i)}<span>${esc(st.players[i].name)}</span>`;
+function mix(a, b, t) {
+  const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+  const A = p(a), B = p(b);
+  return '#' + A.map((v, i) => Math.round(v * t + B[i] * (1 - t)).toString(16).padStart(2, '0')).join('');
+}
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.hidden = false;
+  clearTimeout(ui.toastT); ui.toastT = setTimeout(() => { t.hidden = true; }, 2800);
+}
+function save() {
+  if (!st || st.demo) return;
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(st)); } catch (e) { /* armazenamento indisponível */ }
+}
+function loadSaved() {
+  try { const s = localStorage.getItem(SAVE_KEY); if (!s) return null; const g = JSON.parse(s); return g && g.board && g.players ? g : null; } catch (e) { return null; }
+}
+const actor = () => st.pending ? st.pending.who : st.current;
+const humanTurn = () => st.phase !== 'over' && !st.players[actor()].bot;
+
+function act(a) {
+  try { E.apply(st, a); ui.mode = null; }
+  catch (e) { toast(e.message); }
+  save(); render();
+}
+
+// ------------------------------------------------------------ tabuleiro
+function hexPts(x, y, r) { const p = []; for (let i = 0; i < 6; i++) { const a = Math.PI / 180 * (60 * i - 30); p.push((x + r * Math.cos(a)).toFixed(1) + ',' + (y + r * Math.sin(a)).toFixed(1)); } return p.join(' '); }
+let trackCache = { key: '', svg: '' };
+function tracks(x0, y0, W, H) {
+  const key = [x0, y0, W, H].join();
+  if (trackCache.key === key) return trackCache.svg;
+  let s = 20250611;
+  const r = () => (s = s * 16807 % 2147483647) / 2147483647;
+  let d = '', dots = '';
+  for (let i = 0; i < 18; i++) {
+    const cx = x0 + r() * W, cy = y0 + r() * H, a = r() * 6.283, rad = 18 + r() * 110, turns = 1 + r() * 2.6, dir = r() < .5 ? 1 : -1;
+    const lead = 60 + r() * 220, la = a + dir * 1.6;
+    d += `M${(cx + Math.cos(a) * rad + Math.cos(la) * lead).toFixed(1)},${(cy + Math.sin(a) * rad + Math.sin(la) * lead).toFixed(1)}`;
+    for (let k = 0; k <= 70; k++) { const t = k / 70, ang = a + dir * t * turns * 6.283, rr = rad * Math.exp(-2.4 * t); d += `L${(cx + Math.cos(ang) * rr).toFixed(1)},${(cy + Math.sin(ang) * rr).toFixed(1)}`; }
+    if (i % 3 === 0) dots += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${(1.5 + r() * 2).toFixed(1)}"/>`;
+  }
+  for (let i = 0; i < 9; i++) {
+    const x1 = x0 + r() * W, y1 = y0 - 10, x2 = x0 + r() * W, y2 = y0 + H + 10, mx = (x1 + x2) / 2 + (r() - .5) * 160;
+    d += `M${x1.toFixed(1)},${y1}Q${mx.toFixed(1)},${(y0 + H / 2).toFixed(1)} ${x2.toFixed(1)},${y2}`;
+  }
+  trackCache = { key, svg: `<g aria-hidden="true"><path d="${d}" fill="none" stroke="#dfeaf0" stroke-opacity=".075" stroke-width="1.3"/><g fill="#dfeaf0" fill-opacity=".1">${dots}</g></g>` };
+  return trackCache.svg;
+}
+function highlights() {
+  const hl = { v: new Set(), e: new Set(), h: new Set() };
+  if (!st) return hl;
+  if (ui.mode && ui.mode.kind === 'place') {
+    const tier = E.BUILD[ui.mode.build].tier;
+    for (const s of ui.mode.spots) (tier === 3 ? hl.e : hl.v).add(s);
+    return hl;
+  }
+  const pd = st.pending;
+  if (!pd || st.players[pd.who].bot) return hl;
+  if (pd.pick === 'vertex') pd.options.forEach(v => hl.v.add(v));
+  if (pd.pick === 'edge') pd.options.forEach(e => hl.e.add(e));
+  if (pd.pick === 'hex') pd.options.forEach(h => hl.h.add(h));
+  if (pd.pick === 'target') pd.options.forEach(o => (o.k === 'v' ? hl.v : hl.e).add(o.id));
+  return hl;
+}
+const PIPS = n => 6 - Math.abs(7 - n);
+function hexSVG(h) {
+  const x = h.x * S, y = h.y * S;
+  const prod = E.isProd(h.kind);
+  const blocked = st.tokens.higgs === h.id && prod;
+  let g = `<g><title>${esc(E.TILE_NAME[h.kind])}${prod ? ' — produz ' + E.QN[h.kind] : ''}, número ${h.num} (${pct(E.prob(h.num))} por rolagem)</title>`;
+  if (prod) {
+    g += `<polygon points="${hexPts(x, y, S - 2.5)}" fill="url(#g-${h.kind})" stroke="${mix(QHEX[h.kind], '#ffffff', .75)}" stroke-width="2"/>`;
+    g += `<polygon points="${hexPts(x, y, S - 9)}" fill="none" stroke="#ffffff" stroke-opacity=".08" stroke-width="1.5"/>`;
+    g += `<text x="${x}" y="${y - 13}" text-anchor="middle" font-family="Space Grotesk,Inter,sans-serif" font-style="italic" font-weight="700" font-size="27" fill="#f7fafc" stroke="#0a0d10" stroke-width="3.5" paint-order="stroke">${h.kind}</text>`;
+    const red = h.num === 6 || h.num === 8;
+    g += `<circle cx="${x}" cy="${y + 16}" r="16.5" fill="#f3efe4" stroke="#0a0d10" stroke-width="2"/>`;
+    g += `<text x="${x}" y="${y + 21}" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-weight="700" font-size="${red ? 17 : 16}" fill="${red ? '#c62f25' : '#14181b'}">${h.num}</text>`;
+    const n = PIPS(h.num);
+    for (let i = 0; i < n; i++) g += `<circle cx="${(x + (i - (n - 1) / 2) * 4.2).toFixed(1)}" cy="${y + 26.5}" r="1.35" fill="${red ? '#c62f25' : '#14181b'}"/>`;
+  } else {
+    g += `<polygon points="${hexPts(x, y, S - 2.5)}" fill="#12171c" stroke="#56616a" stroke-width="2"/>`;
+    if (h.kind === 'higgs') for (let i = 1; i <= 3; i++) g += `<circle cx="${x}" cy="${y - 2}" r="${i * 11}" fill="none" stroke="${QHEX.e}" stroke-opacity="${.5 - i * .12}" stroke-width="1.6"/>`;
+    if (h.kind === 'decay') { let d = `M${x - 32},${y - 6}`; for (let i = 0; i < 8; i++) d += `Q${x - 28 + i * 8},${y - 6 + (i % 2 ? 9 : -9)} ${x - 24 + i * 8},${y - 6}`; g += `<path d="${d}" fill="none" stroke="#8fb7ff" stroke-opacity=".55" stroke-width="2"/>`; }
+    if (h.kind === 'fusion') { let d = ''; for (let i = 0; i < 6; i++) { const cx = x - 25 + i * 10; d += `M${cx - 5},${y - 4}a5,7 0 1,1 10,0`; } g += `<path d="${d}" fill="none" stroke="#ff9d7a" stroke-opacity=".6" stroke-width="2"/>`; }
+    const lab = { higgs: 'Higgs', decay: 'Decaimento', fusion: 'Fusão' }[h.kind];
+    g += `<text x="${x}" y="${y - 22}" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-weight="600" font-size="12.5" fill="#c9d3d8">${lab}</text>`;
+    g += `<circle cx="${x}" cy="${y + 18}" r="14" fill="#0a0d10" stroke="#56616a" stroke-width="1.6"/><text x="${x}" y="${y + 23}" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-weight="700" font-size="14" fill="#e6ecef">${h.num}</text>`;
+  }
+  if (blocked) g += `<polygon points="${hexPts(x, y, S - 3)}" fill="url(#hatch)"/>`;
+  return g + '</g>';
+}
+function tokenSVG(tok) {
+  const h = st.board.hexes[st.tokens[tok]], x = h.x * S, y = h.y * S;
+  const slot = E.FIELDS.filter(k => st.tokens[k] === h.id).indexOf(tok);
+  const off = [[-24, -4], [24, -4], [0, -35]][slot];
+  const col = { higgs: QHEX.e, decay: '#8fb7ff', fusion: '#ff9d7a' }[tok];
+  return `<g><title>${E.FIELD_NAME[tok]}</title><circle cx="${x + off[0]}" cy="${y + off[1]}" r="11.5" fill="#0a0d10" stroke="${col}" stroke-width="2.5"/><text x="${x + off[0]}" y="${y + off[1] + 4}" text-anchor="middle" font-family="Space Grotesk,Inter,sans-serif" font-weight="700" font-size="11" fill="${col}">${E.TOKEN_SYM[tok]}</text></g>`;
+}
+function roadSVG(e, r) {
+  const E2 = st.board.edges[e], A = st.board.vertices[E2.v[0]], B = st.board.vertices[E2.v[1]];
+  const k = .2, x1 = (A.x + (B.x - A.x) * k) * S, y1 = (A.y + (B.y - A.y) * k) * S, x2 = (B.x + (A.x - B.x) * k) * S, y2 = (B.y + (A.y - B.y) * k) * S;
+  const col = esc(st.players[r.owner].color);
+  let g = `<g><title>${E.BUILD[r.type].name} de ${esc(st.players[r.owner].name)}</title><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#05070a" stroke-width="12" stroke-linecap="round"/><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-width="7" stroke-linecap="round"/>`;
+  if (r.type === 'magnet') g += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#05070a" stroke-width="2.2" stroke-dasharray="4 4"/>`;
+  if (r.type === 'detector') g += `<rect x="${(x1 + x2) / 2 - 5}" y="${(y1 + y2) / 2 - 5}" width="10" height="10" rx="2" fill="#05070a" stroke="${col}" stroke-width="2"/>`;
+  return g + '</g>';
+}
+function bldSVG(v, b) {
+  const V = st.board.vertices[v], x = V.x * S, y = V.y * S, B = E.BUILD[b.type], col = esc(st.players[b.owner].color);
+  let g = `<g><title>${B.name} de ${esc(st.players[b.owner].name)}${b.shield ? ' (protegido)' : ''}</title>`;
+  if (b.shield) g += `<circle cx="${x}" cy="${y}" r="${B.tier === 2 ? 23 : 18}" fill="none" stroke="#9fe8ff" stroke-width="2" stroke-dasharray="3 3"/>`;
+  if (B.tier === 1) {
+    g += `<circle cx="${x}" cy="${y}" r="13" fill="${col}" stroke="#05070a" stroke-width="3"/>`;
+    g += `<text x="${x}" y="${y + 4.6}" text-anchor="middle" font-family="Space Grotesk,sans-serif" font-weight="700" font-size="13.5" fill="#0a0d10">${B.sym}</text>`;
+  } else {
+    g += `<polygon points="${hexPts(x, y, 19)}" fill="${col}" stroke="#05070a" stroke-width="3" stroke-linejoin="round"/>`;
+    g += `<polygon points="${hexPts(x, y, 14.5)}" fill="none" stroke="#05070a" stroke-opacity=".35" stroke-width="1.2"/>`;
+    g += `<text x="${x}" y="${y + 4.5}" text-anchor="middle" font-family="Inter,sans-serif" font-weight="800" font-size="12" fill="#0a0d10">${B.sym}</text>`;
+  }
+  return g + '</g>';
+}
+function renderBoard() {
+  const Bd = st.board, xs = Bd.vertices.map(v => v.x * S), ys = Bd.vertices.map(v => v.y * S), pad = 24;
+  const x0 = Math.min(...xs) - pad, y0 = Math.min(...ys) - pad, W = Math.max(...xs) + pad - x0, H = Math.max(...ys) + pad - y0;
+  const hl = highlights();
+  let defs = '<defs>';
+  for (const k of E.Q) defs += `<linearGradient id="g-${k}" x1="0" y1="0" x2=".8" y2="1"><stop offset="0" stop-color="${mix(QHEX[k], '#0f1418', .62)}"/><stop offset="1" stop-color="${mix(QHEX[k], '#0f1418', .3)}"/></linearGradient>`;
+  defs += `<pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="#05070a" fill-opacity=".45"/><line x1="0" y1="0" x2="0" y2="8" stroke="${QHEX.e}" stroke-opacity=".55" stroke-width="2.5"/></pattern></defs>`;
+  let s = `<svg viewBox="${x0.toFixed(1)} ${y0.toFixed(1)} ${W.toFixed(1)} ${H.toFixed(1)}" role="img" aria-label="Tabuleiro do HADRON">${defs}`;
+  s += tracks(x0, y0, W, H);
+  s += Bd.hexes.map(hexSVG).join('');
+  s += Object.entries(st.roads).map(([e, r]) => roadSVG(+e, r)).join('');
+  for (const e of hl.e) {
+    const E2 = Bd.edges[e], A = Bd.vertices[E2.v[0]], B = Bd.vertices[E2.v[1]];
+    s += `<line class="pulse" x1="${A.x * S}" y1="${A.y * S}" x2="${B.x * S}" y2="${B.y * S}" stroke="#ffffff" stroke-width="5" stroke-dasharray="6 5" stroke-linecap="round" pointer-events="none"/>`;
+    s += `<line class="hit" data-e="${e}" x1="${A.x * S}" y1="${A.y * S}" x2="${B.x * S}" y2="${B.y * S}" stroke="transparent" stroke-width="20"/>`;
+  }
+  s += E.FIELDS.map(tokenSVG).join('');
+  s += Object.entries(st.buildings).map(([v, b]) => bldSVG(+v, b)).join('');
+  for (const v of hl.v) {
+    const V = Bd.vertices[v], b = st.buildings[v];
+    s += `<circle class="pulse" cx="${V.x * S}" cy="${V.y * S}" r="${b ? 22 : 9}" fill="${b ? 'none' : '#ffffff40'}" stroke="#ffffff" stroke-width="2.5" stroke-dasharray="${b ? '5 4' : '0'}" pointer-events="none"/>`;
+    s += `<circle class="hit" data-v="${v}" cx="${V.x * S}" cy="${V.y * S}" r="17" fill="transparent"/>`;
+  }
+  for (const h of hl.h) {
+    const H2 = Bd.hexes[h];
+    s += `<polygon class="hit" data-h="${h}" points="${hexPts(H2.x * S, H2.y * S, S - 5)}" fill="#ffffff10" stroke="#ffffff" stroke-width="2.5" stroke-dasharray="7 5"/>`;
+  }
+  $('#board').innerHTML = s + '</svg>';
+}
+function renderLegend() {
+  const ts = E.tileStats();
+  $('#legend').innerHTML = '<span>Chance de produzir a cada rolagem:</span>' + E.Q.map(k => `<span>${qd(k)}<b>${E.QN[k]}</b> ${pct(ts[k].p)}</span>`).join('');
+}
+
+// ------------------------------------------------------------ faixa de instrução
+function dieSVG(n) {
+  const P = { 1: [[20, 20]], 2: [[12, 12], [28, 28]], 3: [[11, 11], [20, 20], [29, 29]], 4: [[12, 12], [28, 12], [12, 28], [28, 28]], 5: [[11, 11], [29, 11], [20, 20], [11, 29], [29, 29]], 6: [[12, 10], [28, 10], [12, 20], [28, 20], [12, 30], [28, 30]] }[n];
+  return `<svg viewBox="0 0 40 40" aria-hidden="true"><rect x="1.5" y="1.5" width="37" height="37" rx="8" fill="#f3efe4" stroke="#05070a" stroke-width="2"/>${P.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="3.6" fill="#14181b"/>`).join('')}</svg>`;
+}
+function renderBanner() {
+  const b = $('#banner');
+  if (!st) { b.innerHTML = ''; return; }
+  let dice = '';
+  if (st.dice) {
+    const key = st.turn + ':' + st.dice.join();
+    const cls = key !== ui.lastDice ? ' roll' : '';
+    ui.lastDice = key;
+    dice = `<div class="dice${cls}" title="Soma ${st.dice[0] + st.dice[1]}">${dieSVG(st.dice[0])}${dieSVG(st.dice[1])}</div>`;
+  }
+  if (st.phase === 'over') {
+    b.innerHTML = `${dice}<div class="who">${pname(st.winner)}</div><div class="msg">venceu com <b>${E.vp(st, st.winner)} pontos</b> de estabilidade.</div><div class="opts"><button class="btn pri" type="button" data-a="new">Nova partida</button><button class="btn" type="button" data-a="over">Ver resultado</button></div>`;
+    return;
+  }
+  const who = actor(), P = st.players[who], pd = st.pending;
+  let msg = '', opts = '';
+  const demo = st.demo ? ' <em>Demonstração: o computador joga sozinho até você começar uma partida.</em>' : '';
+  if (P.bot) {
+    msg = (pd ? esc(pd.prompt) : !st.rolled ? 'vai rolar os dados.' : 'está negociando e construindo.') + ' <em>(computador)</em>' + demo;
+  } else if (ui.mode && ui.mode.kind === 'place') {
+    msg = `Toque num ponto destacado para construir: <b>${E.BUILD[ui.mode.build].name}</b>.`;
+    opts = '<button class="btn" type="button" data-a="cancel">Cancelar</button>';
+  } else if (pd) {
+    msg = esc(pd.prompt);
+    const o = pd.options;
+    switch (pd.pick) {
+      case 'vertex': case 'edge': case 'hex': case 'target': msg += ' <em>Toque num ponto destacado do tabuleiro.</em>'; break;
+      case 'player': opts = o.map(i => `<button class="btn" type="button" data-pick="${i}">${pdot(i)} ${esc(st.players[i].name)}</button>`).join(''); break;
+      case 'res': opts = o.map(k => `<button class="btn" type="button" data-pick='"${k}"'>${qd(k)} ${E.QN[k]}</button>`).join(''); break;
+      case 'token': opts = o.map(k => `<button class="btn" type="button" data-pick='"${k}"'>${E.TOKEN_SYM[k]} ${E.FIELD_NAME[k].replace('Campo de ', '')}</button>`).join(''); break;
+      case 'card': opts = o.map(c => `<button class="btn" type="button" data-pick='"${c}"'>${esc(E.CARDS[c].name)}</button>`).join(''); break;
+      case 'yesno':
+        if (pd.kind === 'tradeResponse') opts = (o.includes(true) ? '<button class="btn pri" type="button" data-pick="true">Aceitar</button>' : '') + '<button class="btn" type="button" data-pick="false">Recusar</button>';
+        else opts = '<button class="btn pri" type="button" data-pick="true">Sim, cancelar</button><button class="btn" type="button" data-pick="false">Não</button>';
+        break;
+    }
+  } else if (!st.rolled) {
+    msg = 'Role os dados para produzir quarks.';
+    opts = '<button class="btn pri" type="button" data-a="roll">Rolar dados</button>';
+  } else {
+    msg = 'Negocie, construa e jogue até 1 carta. <em>Top e Bottom decaem no fim do turno.</em>';
+    opts = '<button class="btn pri" type="button" data-a="end">Encerrar turno</button>';
+  }
+  b.innerHTML = `${dice}<div class="who">${pname(who)}</div><div class="msg">${msg}</div><div class="opts">${opts}</div>`;
+}
+
+// ------------------------------------------------------------ console do jogador
+function buildRow(kind, canAct) {
+  const B = E.BUILD[kind], pi = st.current, p = st.players[pi];
+  const spots = E.buildSpots(st, pi, kind);
+  const ok = spots.filter(at => E.payPlan(p, E.costOf(st, pi, kind, at)).ok);
+  let cost = kind === 'deuterium' ? `${costHTML({ u: 1, d: 2 })} <small>ou</small> ${costHTML({ u: 2, d: 1 })}` : costHTML(E.costOf(st, pi, kind));
+  let why = '';
+  if (!spots.length) why = B.tier === 2 ? `Precisa de ${B.from.map(f => E.BUILD[f].name).join('/')} seu` : (E.countTier(st, pi, B.tier) >= E.LIMIT[B.tier] ? 'Limite de peças atingido' : 'Sem local válido');
+  else if (!ok.length) why = 'Faltam recursos';
+  else if (ok.every(at => E.payPlan(p, E.costOf(st, pi, kind, at)).useE)) why = 'Usa 1 Energia no lugar da partícula que falta';
+  const vpTxt = B.vp ? ` <small>${B.vp} pt${B.vp > 1 ? 's' : ''}</small>` : '';
+  const dis = !canAct || !ok.length;
+  return `<div class="brow" title="${esc(B.text)}"><span class="sym t${B.tier}">${B.sym || '—'}</span><div><span class="nm">${B.name}${vpTxt}</span><span class="why">${cost}${why ? ' · ' + why : ''}</span><span class="why">${esc(B.text)}</span></div><button class="btn sm" type="button" data-build="${kind}" ${dis ? 'disabled' : ''}>Construir</button></div>`;
+}
+function renderPanel() {
+  const el = $('#panel');
+  const pi = st.current, p = st.players[pi];
+  const canAct = st.phase === 'play' && !st.pending && st.rolled && !p.bot && !st.demo;
+  const vb = E.vpBreak(st, pi);
+  let h = `<div class="card"><div class="me">${pdot(pi)}<h2>${esc(p.name)}</h2><span class="vp num">${vb.total}<small> / ${E.WIN}</small></span></div>`;
+  h += '<div class="res">' + ['u', 'd', 'c', 's', 't', 'b', 'e'].map(k => `<div class="${k === 't' || k === 'b' ? 'unst' : ''}" title="${E.QN[k]}${k === 't' || k === 'b' ? ' (instável: decai no fim do turno)' : ''}">${qd(k)}<span class="n">${p.res[k]}</span><span class="lab">${E.QN[k]}</span></div>`).join('') + '</div>';
+  if (st.phase === 'setup') h += '<p class="note">Preparação: cada jogador posiciona um Próton e depois um Nêutron, cada um com um Tubo de Deriva, sem custo. Os recursos iniciais vêm dos hexágonos do Nêutron.</p>';
+  else if (p.bot) h += '<p class="note">O computador está jogando este turno.</p>';
+  else if (st.flags.discount) h += '<p class="note">Força Nuclear Forte ativa: o próximo bárion custa 1 Up a menos.</p>';
+  if (p.blind) h += '<p class="note">Blindagem Nuclear ativa até o seu próximo turno.</p>';
+  h += '</div>';
+
+  h += '<div class="card"><h2>Construir</h2><h3>Hádrons (como aldeias)</h3>' + ['proton', 'neutron', 'lambda', 'pion', 'kaon'].map(k => buildRow(k, canAct)).join('');
+  h += '<h3>Núcleos (evoluem no mesmo lugar)</h3>' + ['deuterium', 'helium', 'lithium', 'carbon'].map(k => buildRow(k, canAct)).join('');
+  h += '<h3>Aceleradores (conexões)</h3>' + ['drift', 'magnet', 'detector'].map(k => buildRow(k, canAct)).join('') + '</div>';
+
+  const r = E.bankRatio(st, pi);
+  h += `<div class="card"><h2>Trocar</h2><h3>Banco ${r}:1${r === 2 ? ' (Píon)' : ''}</h3>`;
+  h += `<div class="trow"><span class="l">Dar ${r}</span><div class="seg">${E.Q.map(k => `<button type="button" data-bg="${k}" aria-pressed="${ui.bankGive === k}" ${!canAct || p.res[k] < r ? 'disabled' : ''}>${qd(k)}</button>`).join('')}</div></div>`;
+  h += `<div class="trow"><span class="l">Receber 1</span><div class="seg">${E.Q.map(k => `<button type="button" data-bt="${k}" aria-pressed="${ui.bankGet === k}" ${!canAct ? 'disabled' : ''}>${qd(k)}</button>`).join('')}</div></div>`;
+  const bankOk = canAct && ui.bankGive && ui.bankGet && ui.bankGive !== ui.bankGet && p.res[ui.bankGive] >= r;
+  h += `<button class="btn sm" type="button" data-a="bank" ${bankOk ? '' : 'disabled'}>Trocar com o banco</button>`;
+  h += `<h3>Energia 3:1</h3><div class="trow"><span class="l">3 ${qd('e')}→</span><div class="seg">${E.Q.map(k => `<button type="button" data-en="${k}" ${!canAct || p.res.e < 3 ? 'disabled' : ''}>${qd(k)}</button>`).join('')}</div></div>`;
+  if (E.owns(st, pi, 'lithium')) {
+    const liOk = canAct && !st.flags.liUsed && p.res.u >= 1 && p.res.d >= 1;
+    h += `<h3>Fusão do Lítio-7 (1 por turno)</h3><div class="trow"><span class="l">${qd('u')}+${qd('d')}→</span><div class="seg"><button type="button" data-li="t" ${liOk ? '' : 'disabled'}>${qd('t')} Top</button><button type="button" data-li="b" ${liOk ? '' : 'disabled'}>${qd('b')} Bottom</button></div></div>`;
+  }
+  h += `<h3>Com outro jogador</h3><button class="btn sm" type="button" data-a="trade" ${canAct ? '' : 'disabled'}>Propor troca…</button></div>`;
+
+  const uniq = [...new Set(p.cards)];
+  h += `<div class="card"><h2>Cartas de Interação <small class="num" style="color:var(--mute);font-weight:500">${p.cards.length}/${E.HAND}</small></h2>`;
+  if (E.canUnify(st, pi)) h += `<p class="note">Você tem as 4 forças básicas.</p><button class="btn pri sm" type="button" data-a="unify" ${canAct ? '' : 'disabled'}>Unificação das Forças (+2 pontos)</button>`;
+  h += '<div class="hand">' + (uniq.length ? uniq.map(id => {
+    const C = E.CARDS[id], n = p.cards.filter(c => c === id).length;
+    const playable = canAct && E.cardPlayable(st, pi, id);
+    const why = !playable && canAct ? E.whyNotCard(st, pi, id) : '';
+    return `<div class="ic ${C.group}"><div class="hd"><b>${esc(C.name)}${n > 1 ? ' ×' + n : ''}</b><span class="g">${GROUP[C.group]}</span></div><p>${esc(C.text)}</p>${id === 'estab' ? '<span class="why">Guardada para reagir a campos.</span>' : `<button class="btn sm" type="button" data-card="${id}" ${playable ? '' : 'disabled'}>Jogar</button> <span class="why">${esc(why)}</span>`}</div>`;
+  }).join('') : '<p class="note">Sem cartas na mão.</p>') + '</div>';
+  if (p.points.length) h += `<h3>Conquistas</h3><p class="note">${p.points.map(c => esc(E.CARDS[c].name)).join(', ')} (+${p.points.length})</p>`;
+  h += '</div>';
+  el.innerHTML = h;
+}
+
+// ------------------------------------------------------------ placar e registro
+function renderPlayers() {
+  $('#players').innerHTML = st.players.map((p, i) => {
+    const vb = E.vpBreak(st, i), badges = [];
+    if (vb.longest) badges.push('Maior cadeia +2');
+    if (vb.higgs) badges.push('Bóson de Higgs +3');
+    if (vb.susy) badges.push('Supersimetria +2');
+    if (vb.unified) badges.push('Unificação +2');
+    if (vb.collab) badges.push(`Colaboração +${vb.collab}`);
+    if (vb.cards) badges.push(`Conquistas +${vb.cards}`);
+    if (p.blind) badges.push('Blindagem');
+    const q = E.qCount(p);
+    return `<div class="pl${i === st.current ? ' cur' : ''}">${pdot(i)}<div><span class="pn">${esc(p.name)}</span>${p.bot ? '<span class="tag">computador</span>' : ''}</div><span class="pv num">${vb.total}</span><div class="st">${q} quark${q === 1 ? '' : 's'} · ${p.res.e} Energia · ${p.cards.length} carta${p.cards.length === 1 ? '' : 's'} · cadeia ${st.chains[i] || 0}</div>${badges.length ? `<div class="badges">${badges.map(b => `<span class="badge">${b}</span>`).join('')}</div>` : ''}</div>`;
+  }).join('');
+}
+function renderLog() {
+  $('#log').innerHTML = st.log.slice(-80).reverse().map(l => `<li><span class="t">${l.n || ''}</span>${l.p != null ? `<span class="dot" style="background:${esc(st.players[l.p].color)}"></span>` : '<span class="dot" style="background:transparent;border-color:transparent;box-shadow:none"></span>'}<span>${esc(l.txt)}</span></li>`).join('');
+}
+
+// ------------------------------------------------------------ janelas
+function setupDefaults() {
+  return { n: 3, players: DEFAULT_NAMES.map(name => ({ name, bot: false })) };
+}
+function modalNew() {
+  const s = ui.setup || (ui.setup = setupDefaults());
+  const saved = loadSaved();
+  const rows = s.players.slice(0, s.n).map((p, i) => `<div class="prow"><span class="dot" style="background:${PCOL[i]};width:22px;height:22px"></span><input id="p${i}name" maxlength="16" value="${esc(p.name)}" aria-label="Nome do jogador ${i + 1}"><div class="seg"><button type="button" data-ptype="${i}:h" aria-pressed="${!p.bot}">Humano</button><button type="button" data-ptype="${i}:b" aria-pressed="${p.bot}">Computador</button></div></div>`).join('');
+  return `<div class="modal"><h2>Nova partida de HADRON</h2><p class="lead">Construa hádrons e núcleos atômicos com quarks produzidos pelos aceleradores. Vence quem chegar a ${E.WIN} pontos de estabilidade. Todos jogam no mesmo aparelho; o computador pode ocupar qualquer lugar.</p><p class="note">Criado por Apiano F. Morais, Job S. Furtado Neto e Ivan C. Jardim.</p>
+  <h3>Jogadores</h3><div class="seg"><button type="button" data-pn="3" aria-pressed="${s.n === 3}">3 jogadores</button><button type="button" data-pn="4" aria-pressed="${s.n === 4}">4 jogadores</button></div>${rows}
+  <div class="mfoot">${saved && !saved.winner && st && (st.demo || st.phase === 'over') ? '<button class="btn" type="button" data-a="continue">Continuar partida salva</button>' : ''}<button class="btn ghost" type="button" data-a="close">${st && st.demo ? 'Assistir à demonstração' : 'Voltar'}</button><button class="btn pri" type="button" data-a="start">Começar</button></div></div>`;
+}
+function modalRules() {
+  const t = ui.rulesTab;
+  const tab = (id, l) => `<button type="button" role="tab" data-tab="${id}" aria-selected="${t === id}">${l}</button>`;
+  let body = '';
+  if (t === 'regras') {
+    body = `<h3>Objetivo</h3><p>Primeiro a somar ${E.WIN} pontos de estabilidade no próprio turno vence.</p>
+    <h3>Turno</h3><ol class="interp"><li>Role 2d6. Cada hexágono com o número sorteado produz o seu quark para as construções vizinhas: hádron recebe 1, núcleo recebe 2.</li><li>Soma 2, 7 ou 12 ativa um Campo Quântico em vez de produzir.</li><li>Negocie com o banco, com a Energia ou com outros jogadores; construa; jogue até 1 carta.</li><li>Ao encerrar, todo Top vira Charm + 1 Energia e todo Bottom vira Strange + 1 Energia (de todos os jogadores). Quem tiver mais de ${E.HAND} cartas descarta.</li></ol>
+    <h3>Construções</h3><div class="scroll"><table><thead><tr><th>Peça</th><th>Custo</th><th class="r">Pontos</th><th>Efeito</th></tr></thead><tbody>${Object.entries(E.BUILD).map(([k, B]) => `<tr><td><b>${B.name}</b></td><td>${k === 'deuterium' ? costHTML({ u: 1, d: 2 }) + ' ou ' + costHTML({ u: 2, d: 1 }) : costHTML(B.cost)}</td><td class="r">${B.vp || '—'}</td><td>${esc(B.text)}</td></tr>`).join('')}</tbody></table></div>
+    <p>Energia pode substituir 1 partícula em qualquer construção. Hádrons pedem uma conexão sua e respeitam a distância mínima de 2 intersecções. Limites: ${E.LIMIT[1]} hádrons, ${E.LIMIT[2]} núcleos e ${E.LIMIT[3]} aceleradores por jogador.</p>
+    <h3>Campos Quânticos</h3><ol class="interp"><li><b>Higgs (7)</b>: mova a ficha H⁰; o hexágono fica sem produção e você rouba 1 quark de um vizinho dele. Káon, Carbono-12 e Simetria Gauge ignoram o bloqueio.</li><li><b>Decaimento (2)</b>: um núcleo de oponente desce um nível (Lítio → Hélio → Deutério → hádron) e os vizinhos capturam 1 quark leve cada. Sem alvo, você ganha 1 Energia.</li><li><b>Fusão (12)</b>: dois oponentes perdem 2 quarks aleatórios cada e ganham 1 ponto cada por um Núcleo Colaborativo.</li><li><b>Unificação Eletrofraca</b>: se duas fichas de campo pararem no mesmo hexágono, todos pescam 1 carta.</li></ol>
+    <h3>Cartas de Interação (${E.DECK_SIZE})</h3><div class="scroll"><table><thead><tr><th>Carta</th><th class="r">Qtd.</th><th>Tipo</th><th>Efeito</th></tr></thead><tbody>${Object.values(E.CARDS).map(C => `<tr><td><b>${esc(C.name)}</b></td><td class="r">${C.n}</td><td>${GROUP[C.group]}</td><td>${esc(C.text)}</td></tr>`).join('')}</tbody></table></div>
+    <h3>Pontos</h3><p>Hádron 1 · Deutério, Hélio-4 e Lítio-7: 2 · Carbono-12: 3 · Maior Cadeia de Aceleradores (mínimo ${E.LONG_MIN}, Ímã vale 2): 2 · Nobel e Nature: 1 cada · Núcleo Colaborativo: 1 · Bóson de Higgs (ter Deutério, Hélio-4, Lítio-7 e Carbono-12 ao mesmo tempo): 3 · Supersimetria (3 mésons): 2 · Unificação das Forças (descartar as 4 forças básicas): 2.</p>`;
+  } else if (t === 'escolhas') {
+    body = `<p>Onde o GDD deixava a regra aberta ou entrava em conflito, o protótipo decidiu assim. Tudo pode ser ajustado.</p><ol class="interp">
+    <li>Tiles: a distribuição que fechamos na conversa (Up 6, 8, 9 · Down 4, 6, 8 · Charm 3, 5, 9, 10 · Strange 4, 5, 10, 11 · Top 11 · Bottom 3 · campos 2, 7, 12). Os hexágonos são embaralhados a cada partida, sem 6 e 8 vizinhos.</li>
+    <li>Núcleos evoluem sobre um hádron seu e você paga só os núcleons que faltam. Por isso o Carbono-12 custa 2 Energias sobre um Hélio-4, que já tem os 2 prótons e 2 nêutrons pedidos no GDD.</li>
+    <li>O GDD só diz que o Deutério produz 2. Aqui todo núcleo produz 2, como as cidades do Catan.</li>
+    <li>O GDD manda resolver o decaimento de Top/Bottom antes da construção e também diz que eles valem no turno da coleta. Valeu a segunda leitura: decaem no fim do turno.</li>
+    <li>Cartas de Reação custam 1 Energia (o GDD cita "ativar cartas" como uso da Energia). Aniquilação paga o próprio par: 2 quarks iguais + 2 Energias, já que antipartícula = partícula + 2 Energias.</li>
+    <li>Lambda: a "habilidade especial" virou pescar 1 carta e poder virar núcleo como um Próton. Lítio-7: "combina hádrons" virou 1 Up + 1 Down → 1 Top ou Bottom por turno. Píon: banco 2:1 para qualquer quark.</li>
+    <li>Fusão (12): a "construção colaborativa" é um Núcleo Colaborativo que vale 1 ponto para cada um dos dois envolvidos.</li>
+    <li>Bóson de Higgs pedia 5 tipos de núcleo, mas só existem 4. Virou ter os 4 ao mesmo tempo.</li>
+    <li>O GDD cita cartas que valem 1 ponto sem listá-las: entraram 2 Prêmio Nobel e 2 Publicação na Nature.</li>
+    <li>Sem descarte de metade da mão no 7, porque o GDD não pede. Limites de peças e o mínimo de 5 para a maior cadeia vêm do Catan.</li>
+    <li>Simetria Gauge protege também contra Fissão e Aniquilação. Estabilização Quântica só cancela campos ativados pelos dados.</li></ol>`;
+  } else {
+    const ts = E.tileStats(), maxP = Math.max(...E.Q.map(k => ts[k].p));
+    const total = st.rolls.reduce((a, b) => a + b, 0);
+    let hist = '';
+    for (let n = 2; n <= 12; n++) {
+      const exp = total * E.prob(n), max = Math.max(1, ...st.rolls, total * 6 / 36);
+      hist += `<div><span>${st.rolls[n]}</span><div class="hb"><i class="${[2, 7, 12].includes(n) ? 'f' : ''}" style="height:${(st.rolls[n] / max * 100).toFixed(1)}%"></i>${total ? `<s style="bottom:${(exp / max * 100).toFixed(1)}%"></s>` : ''}</div><b>${n}</b></div>`;
+    }
+    body = `<h3>Chance de cada quark ser produzido numa rolagem</h3><div class="scroll"><table><thead><tr><th>Quark</th><th>Números</th><th class="r">Por rolagem</th><th style="width:40%"></th></tr></thead><tbody>${E.Q.map(k => `<tr><td>${qd(k)} ${E.QN[k]}</td><td>${ts[k].nums.join(', ')}</td><td class="r">${pct(ts[k].p)}</td><td><div class="bar" style="--k:${QHEX[k]};width:${(ts[k].p / maxP * 100).toFixed(0)}%"></div></td></tr>`).join('')}<tr><td>Campos</td><td>2, 7, 12</td><td class="r">${pct(E.prob(2) + E.prob(7) + E.prob(12))}</td><td></td></tr></tbody></table></div>
+    <p class="note">As porcentagens somam mais de 100% porque números são compartilhados: um 6 produz Up e Down ao mesmo tempo.</p>
+    <h3>Rolagens desta partida (${total})</h3><p class="note">Barras: vezes que cada soma saiu. Traço: o esperado para ${total} rolagens. Em vermelho, os campos.</p><div class="hist">${hist}</div>`;
+  }
+  return `<div class="modal wide" role="dialog" aria-label="Regras"><h2>Regras do protótipo</h2><p class="lead">HADRON, criado por Apiano F. Morais, Job S. Furtado Neto e Ivan C. Jardim.</p><div class="tabs" role="tablist">${tab('regras', 'Regras')}${tab('escolhas', 'Escolhas de design')}${tab('stats', 'Estatística')}</div>${body}<div class="mfoot"><button class="btn pri" type="button" data-a="close">Fechar</button></div></div>`;
+}
+function modalTrade() {
+  const pi = st.current, p = st.players[pi], T = ui.trade;
+  const opp = st.players.map((_, i) => i).filter(i => i !== pi);
+  if (T.to == null || T.to === pi) T.to = opp[0];
+  const q = st.players[T.to];
+  const RK = ['u', 'd', 'c', 's', 't', 'b', 'e'];
+  const grid = (side, src) => `<div class="tgrid">${RK.map(k => `<div><span>${qd(k)}<small style="color:var(--mute)"> tem ${src.res[k]}</small></span><span class="step"><button type="button" data-tr="${side}:${k}:-1" aria-label="menos ${E.QN[k]}">−</button><b class="num" style="min-width:1.2em;text-align:center">${T[side][k] || 0}</b><button type="button" data-tr="${side}:${k}:1" aria-label="mais ${E.QN[k]}">+</button></span></div>`).join('')}</div>`;
+  const okGive = Object.values(T.give).some(v => v > 0), okGet = Object.values(T.get).some(v => v > 0);
+  return `<div class="modal wide" role="dialog" aria-label="Propor troca"><h2>Propor troca</h2><p class="lead">A outra pessoa responde no mesmo aparelho. O computador decide sozinho.</p>
+  <h3>Com quem</h3><div class="seg">${opp.map(i => `<button type="button" data-tto="${i}" aria-pressed="${T.to === i}">${pdot(i)} ${esc(st.players[i].name)}</button>`).join('')}</div>
+  <h3>Você dá</h3>${grid('give', p)}<h3>Você recebe de ${esc(q.name)}</h3>${grid('get', q)}
+  <div class="mfoot"><button class="btn ghost" type="button" data-a="close">Cancelar</button><button class="btn pri" type="button" data-a="sendtrade" ${okGive && okGet ? '' : 'disabled'}>Enviar proposta</button></div></div>`;
+}
+function modalOver() {
+  const rows = st.players.map((p, i) => ({ i, b: E.vpBreak(st, i) })).sort((a, b) => b.b.total - a.b.total);
+  return `<div class="modal wide" role="dialog" aria-label="Fim de partida"><h2>${esc(st.players[st.winner].name)} venceu</h2><p class="lead">${Math.ceil(st.turn / st.players.length)} rodadas. Pontos por origem:</p>
+  <div class="scroll"><table><thead><tr><th>Jogador</th><th class="r">Construções</th><th class="r">Cadeia</th><th class="r">Cartas</th><th class="r">Colab.</th><th class="r">Experimentos</th><th class="r">Total</th></tr></thead><tbody>${rows.map(({ i, b }) => `<tr><td>${pdot(i)} ${esc(st.players[i].name)}</td><td class="r">${b.builds}</td><td class="r">${b.longest}</td><td class="r">${b.cards}</td><td class="r">${b.collab}</td><td class="r">${b.unified + b.higgs + b.susy}</td><td class="r"><b>${b.total}</b></td></tr>`).join('')}</tbody></table></div>
+  <div class="mfoot"><button class="btn ghost" type="button" data-a="close">Ver o tabuleiro</button><button class="btn pri" type="button" data-a="new">Nova partida</button></div></div>`;
+}
+function renderModal() {
+  const m = $('#modal');
+  if (!ui.modal) { m.innerHTML = ''; return; }
+  const html = ui.modal === 'new' ? modalNew() : ui.modal === 'rules' ? modalRules() : ui.modal === 'trade' ? modalTrade() : modalOver();
+  m.innerHTML = `<div class="ov" data-a="ovclose">${html}</div>`;
+}
+function openModal(name) { ui.modal = name; renderModal(); }
+
+// ------------------------------------------------------------ ciclo
+function render() {
+  if (!st) return;
+  if (st.phase === 'over' && !ui.overShown && !st.demo) { ui.overShown = true; ui.modal = 'over'; renderModal(); }
+  if (ui.mode && (st.pending || !humanTurn())) ui.mode = null;
+  $('#sub').textContent = st.phase === 'setup' ? 'Preparação' : `Rodada ${Math.max(1, Math.ceil(st.turn / st.players.length))}`;
+  renderBanner(); renderBoard(); renderPanel(); renderPlayers(); renderLog();
+  scheduleBot();
+}
+function scheduleBot() {
+  clearTimeout(botTimer);
+  if (!st || st.phase === 'over' || !st.players[actor()].bot) return;
+  if (st.demo && st.phase === 'over') return;
+  botTimer = setTimeout(() => {
+    if (!st || st.phase === 'over' || !st.players[actor()].bot) return;
+    try { E.apply(st, E.botAction(st)); }
+    catch (e) { try { E.apply(st, st.pending ? { type: 'pick', value: st.pending.options[0] } : { type: 'end' }); } catch (e2) { toast('O computador travou: ' + e2.message); return; } }
+    save(); render();
+  }, st.demo ? 700 : 650);
+}
+function startGame(players) {
+  st = E.newGame({ players });
+  ui.mode = null; ui.overShown = false; ui.bankGive = ui.bankGet = null; ui.lastDice = '';
+  ui.modal = null; renderModal(); save(); render();
+}
+function demoGame(seed = 8128) {
+  const g = E.newGame({ players: DEFAULT_NAMES.slice(0, 3).map((name, i) => ({ name, color: PCOL[i], bot: true })), seed });
+  g.demo = true;
+  let guard = 0;
+  while (g.phase !== 'over' && g.turn < 26 && guard++ < 5000) E.apply(g, E.botAction(g));
+  if (g.phase === 'over') return demoGame(seed + 1);
+  return g;
+}
+
+// ------------------------------------------------------------ eventos
+function onClick(ev) {
+  const t = ev.target.closest('[data-a],[data-pick],[data-build],[data-bg],[data-bt],[data-en],[data-li],[data-card],[data-pn],[data-ptype],[data-tab],[data-tr],[data-tto],[data-v],[data-e],[data-h]');
+  if (!t) return;
+  const d = t.dataset;
+  if (d.a === 'ovclose' && ev.target !== t) return;
+  if (d.v !== undefined || d.e !== undefined || d.h !== undefined) return boardPick(d);
+  if (d.pick !== undefined) return act({ type: 'pick', value: JSON.parse(d.pick) });
+  if (d.build) {
+    const pi = st.current, p = st.players[pi];
+    const spots = E.buildSpots(st, pi, d.build).filter(at => E.payPlan(p, E.costOf(st, pi, d.build, at)).ok);
+    ui.mode = { kind: 'place', build: d.build, spots };
+    render();
+    $('#board').scrollIntoView({ block: matchMedia('(max-width:980px)').matches ? 'start' : 'nearest', behavior: 'smooth' });
+    return;
+  }
+  if (d.bg) { ui.bankGive = d.bg; return render(); }
+  if (d.bt) { ui.bankGet = d.bt; return render(); }
+  if (d.en) return act({ type: 'energy', get: d.en });
+  if (d.li) return act({ type: 'li', get: d.li });
+  if (d.card) return act({ type: 'card', id: d.card });
+  if (d.pn) { ui.setup.n = +d.pn; return renderModal(); }
+  if (d.ptype) { readNames(); const [i, k] = d.ptype.split(':'); ui.setup.players[+i].bot = k === 'b'; return renderModal(); }
+  if (d.tab) { ui.rulesTab = d.tab; return renderModal(); }
+  if (d.tto) { ui.trade.to = +d.tto; ui.trade.get = {}; return renderModal(); }
+  if (d.tr) {
+    const [side, k, delta] = d.tr.split(':'), T = ui.trade;
+    const src = side === 'give' ? st.players[st.current] : st.players[T.to];
+    T[side][k] = Math.max(0, Math.min(src.res[k], (T[side][k] || 0) + +delta));
+    return renderModal();
+  }
+  switch (d.a) {
+    case 'roll': return act({ type: 'roll' });
+    case 'end': return act({ type: 'end' });
+    case 'cancel': ui.mode = null; return render();
+    case 'bank': { const a = { type: 'bank', give: ui.bankGive, get: ui.bankGet }; ui.bankGive = ui.bankGet = null; return act(a); }
+    case 'unify': return act({ type: 'unify' });
+    case 'trade': ui.trade = { to: null, give: {}, get: {} }; return openModal('trade');
+    case 'sendtrade': { const T = ui.trade; ui.modal = null; renderModal(); return act({ type: 'offer', to: T.to, give: T.give, get: T.get }); }
+    case 'new': ui.setup = ui.setup || setupDefaults(); return openModal('new');
+    case 'over': return openModal('over');
+    case 'continue': { const g = loadSaved(); if (g) { st = g; ui.overShown = !!g.winner; ui.modal = null; renderModal(); render(); } return; }
+    case 'start': {
+      readNames();
+      const s = ui.setup;
+      const players = s.players.slice(0, s.n).map((p, i) => ({ name: (p.name || '').trim() || DEFAULT_NAMES[i], color: PCOL[i], bot: p.bot }));
+      if (players.every(p => p.bot)) toast('Todos são computador: a partida vai rodar sozinha.');
+      return startGame(players);
+    }
+    case 'close': case 'ovclose': ui.modal = null; return renderModal();
+  }
+}
+function readNames() {
+  if (!ui.setup) return;
+  ui.setup.players.forEach((p, i) => { const el = document.getElementById(`p${i}name`); if (el) p.name = el.value; });
+}
+function boardPick(d) {
+  if (!st || !humanTurn()) return;
+  const v = d.v !== undefined ? +d.v : null, e = d.e !== undefined ? +d.e : null, h = d.h !== undefined ? +d.h : null;
+  if (ui.mode && ui.mode.kind === 'place') return act({ type: 'build', kind: ui.mode.build, at: E.BUILD[ui.mode.build].tier === 3 ? e : v });
+  const pd = st.pending;
+  if (!pd) return;
+  if (pd.pick === 'target') return act({ type: 'pick', value: v !== null ? { k: 'v', id: v } : { k: 'e', id: e } });
+  return act({ type: 'pick', value: pd.pick === 'vertex' ? v : pd.pick === 'edge' ? e : h });
+}
+document.addEventListener('click', onClick);
+document.addEventListener('keydown', ev => {
+  if (ev.key !== 'Escape') return;
+  if (ui.modal) { ui.modal = null; renderModal(); } else if (ui.mode) { ui.mode = null; render(); }
+});
+document.addEventListener('input', ev => { if (ev.target.id && /^p\dname$/.test(ev.target.id)) readNames(); });
+$('#bRules').addEventListener('click', () => openModal('rules'));
+$('#bNew').addEventListener('click', () => { ui.setup = ui.setup || setupDefaults(); openModal('new'); });
+
+function start(data) {
+  renderLegend();
+  if (data && data.st && data.st.board && !data.st.demo) { st = data.st; ui.overShown = !!st.winner; render(); return; }
+  const saved = loadSaved();
+  if (saved && !saved.winner) { st = saved; render(); return; }
+  st = demoGame();
+  ui.setup = setupDefaults();
+  render();
+  openModal('new');
+}
+window.claude?.hot?.snapshot?.(() => ({ st }));
+window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+}
+</script>
+</body>
+</html>
